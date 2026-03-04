@@ -1,43 +1,43 @@
-[中文](#中文) | [English](#english) | [Español](#español) | [Català](#català)
+[Català](#català) | [Español](#español) | [English](#english) | [中文](#中文)
 
 ---
 
-<a name="中文"></a>
+<a name="català"></a>
 # Custom Background Sound (CBS)
 
-一个用于创建个性化环境音景的网页应用，帮助你专注、放松或入睡。
+Una aplicació web per crear paisatges sonors ambientals personalitzats que t'ajudin a concentrar-te, relaxar-te o dormir.
 
-**在线体验：** [https://ziqizhu-lan.github.io/CBS](https://ziqizhu-lan.github.io/CBS)
-
----
-
-## 简介
-
-**Custom Background Sound** 让你混合多种环境音——如雨声、风声、篝火、鸟鸣和海浪——打造专属的音频环境。无需安装，直接在浏览器中运行。
-
-使用 **React + TypeScript** 构建，**Howler.js** 处理音频，**Zustand** 管理状态。所有音频文件均来自开放授权（CC0 / CC-BY）素材库。
+**Demo en viu:** [https://ziqizhu-lan.github.io/CBS](https://ziqizhu-lan.github.io/CBS)
 
 ---
 
-## 功能
+## Descripció
 
-- **多轨混音** — 同时播放多种环境音
-- **独立音量控制** — 单独调节每个音轨的音量
-- **计时器** — 1–60 分钟后自动停止所有声音
-- **预设模式** — 学习、放松、睡眠
-- **用户账户** — 注册登录以保存个人偏好设置
-- **安全存储** — 密码经 SHA256 哈希处理，数据存储于 localStorage
-- **离线支持** — 首次加载后无需网络即可使用
+**Custom Background Sound** et permet barrejar sons ambientals — com pluja, vent, foguera, ocells o onades del mar — per crear el teu entorn d'àudio perfecte. No cal instal·lació; funciona directament al navegador.
+
+Desenvolupat amb **React + TypeScript**, **Howler.js** per a l'àudio i **Zustand** per a la gestió de l'estat. Tots els fitxers d'àudio provenen de fonts amb llicències obertes (CC0 / CC-BY).
 
 ---
 
-## 快速开始
+## Funcionalitats
 
-### 环境要求
+- **Mescla multipista** — Reprodueix diversos sons ambientals simultàniament
+- **Control de volum independent** — Ajusta cada so per separat
+- **Temporitzador** — Atura automàticament tots els sons després d'1–60 minuts
+- **Modes predefinits** — Estudi, Relaxació, Son
+- **Comptes d'usuari** — Registra't i inicia sessió per desar les teves preferències
+- **Emmagatzematge segur** — Contrasenyes amb hash SHA256; dades a localStorage
+- **Mode fora de línia** — Funciona després de la primera càrrega, sense internet
+
+---
+
+## Primers passos
+
+### Requisits
 - Node.js
 - npm
 
-### 安装
+### Instal·lació
 ```bash
 git clone https://github.com/ZiqiZhu-Lan/CBS.git
 cd CBS
@@ -45,118 +45,39 @@ npm install
 npm start
 ```
 
-应用将在 `http://localhost:3000` 启动。
+L'aplicació s'obrirà a `http://localhost:3000`.
 
 ---
 
-## 技术栈
+## Tecnologies
 
-| 类别 | 技术 |
-|---|---|
-| 前端框架 | React 19 + TypeScript |
-| 音频库 | Howler.js 2.2.4 |
-| 状态管理 | Zustand 5.0.9 |
-| 样式 | CSS Modules |
-| 图标 | React Icons |
-| 存储 | localStorage + SHA256 (Crypto-JS) |
-| 托管 | GitHub Pages |
-
----
-
-## 音频来源
-
-所有音频文件均来自 [Freesound.org](https://freesound.org)，授权协议为 CC0 或 CC-BY。
-
----
-
-## 作者
-
-**Yuhan Zhu · Ziqi Zhu** — CFGM Sistemes Microinformàtics i Xarxes (SMX)，Institut Puig Castellar
-
----
-
-## 许可证
-
-本项目采用 [CC BY-NC-ND 3.0 ES](https://creativecommons.org/licenses/by-nc-nd/3.0/es/) 许可证。
-
----
-
-<a name="english"></a>
-# Custom Background Sound (CBS)
-
-A web application for creating personalized ambient soundscapes to help you focus, relax, or sleep.
-
-**Live Demo:** [https://ziqizhu-lan.github.io/CBS](https://ziqizhu-lan.github.io/CBS)
-
----
-
-## About
-
-**Custom Background Sound** lets you mix and combine ambient sounds — like rain, wind, campfire, birds, and ocean waves — to create your perfect audio environment. No installation needed; it runs directly in your browser.
-
-Built with **React + TypeScript**, **Howler.js** for audio, and **Zustand** for state management. All audio files are sourced from open-licensed (CC0 / CC-BY) libraries.
-
----
-
-## Features
-
-- **Multi-track mixing** — Play multiple ambient sounds simultaneously
-- **Independent volume control** — Adjust each sound individually
-- **Timer** — Auto-stop all sounds after 1–60 minutes
-- **Preset modes** — Study, Relaxation, Sleep
-- **User accounts** — Register and log in to save your personal preferences
-- **Secure storage** — Passwords hashed with SHA256; data stored in localStorage
-- **Offline support** — Works after the first load, even without internet
-
----
-
-## Getting Started
-
-### Prerequisites
-- Node.js
-- npm
-
-### Installation
-```bash
-git clone https://github.com/ZiqiZhu-Lan/CBS.git
-cd CBS
-npm install
-npm start
-```
-
-The app will open at `http://localhost:3000`.
-
----
-
-## Tech Stack
-
-| Category | Technology |
+| Categoria | Tecnologia |
 |---|---|
 | Frontend | React 19 + TypeScript |
-| Audio | Howler.js 2.2.4 |
-| State | Zustand 5.0.9 |
-| Styles | CSS Modules |
-| Icons | React Icons |
-| Storage | localStorage + SHA256 (Crypto-JS) |
-| Hosting | GitHub Pages |
+| Àudio | Howler.js 2.2.4 |
+| Estat | Zustand 5.0.9 |
+| Estils | CSS Modules |
+| Icones | React Icons |
+| Emmagatzematge | localStorage + SHA256 (Crypto-JS) |
+| Allotjament | GitHub Pages |
 
 ---
 
-## Sound Sources
+## Fonts d'àudio
 
-All audio files are sourced from [Freesound.org](https://freesound.org) under CC0 or CC-BY licenses.
+Tots els fitxers d'àudio provenen de [Freesound.org](https://freesound.org) amb llicències CC0 o CC-BY.
 
 ---
 
-## Authors
+## Autors
 
 **Yuhan Zhu · Ziqi Zhu** — CFGM Sistemes Microinformàtics i Xarxes (SMX), Institut Puig Castellar
 
 ---
 
-## License
+## Llicència
 
-This project is licensed under [CC BY-NC-ND 3.0 ES](https://creativecommons.org/licenses/by-nc-nd/3.0/es/).
+Aquest projecte està sota la llicència [CC BY-NC-ND 3.0 ES](https://creativecommons.org/licenses/by-nc-nd/3.0/es/).
 
 ---
 
@@ -239,42 +160,42 @@ Este proyecto está bajo la licencia [CC BY-NC-ND 3.0 ES](https://creativecommon
 
 ---
 
-<a name="català"></a>
+<a name="english"></a>
 # Custom Background Sound (CBS)
 
-Una aplicació web per crear paisatges sonors ambientals personalitzats que t'ajudin a concentrar-te, relaxar-te o dormir.
+A web application for creating personalized ambient soundscapes to help you focus, relax, or sleep.
 
-**Demo en viu:** [https://ziqizhu-lan.github.io/CBS](https://ziqizhu-lan.github.io/CBS)
-
----
-
-## Descripció
-
-**Custom Background Sound** et permet barrejar sons ambientals — com pluja, vent, foguera, ocells o onades del mar — per crear el teu entorn d'àudio perfecte. No cal instal·lació; funciona directament al navegador.
-
-Desenvolupat amb **React + TypeScript**, **Howler.js** per a l'àudio i **Zustand** per a la gestió de l'estat. Tots els fitxers d'àudio provenen de fonts amb llicències obertes (CC0 / CC-BY).
+**Live Demo:** [https://ziqizhu-lan.github.io/CBS](https://ziqizhu-lan.github.io/CBS)
 
 ---
 
-## Funcionalitats
+## About
 
-- **Mescla multipista** — Reprodueix diversos sons ambientals simultàniament
-- **Control de volum independent** — Ajusta cada so per separat
-- **Temporitzador** — Atura automàticament tots els sons després d'1–60 minuts
-- **Modes predefinits** — Estudi, Relaxació, Son
-- **Comptes d'usuari** — Registra't i inicia sessió per desar les teves preferències
-- **Emmagatzematge segur** — Contrasenyes amb hash SHA256; dades a localStorage
-- **Mode fora de línia** — Funciona després de la primera càrrega, sense internet
+**Custom Background Sound** lets you mix and combine ambient sounds — like rain, wind, campfire, birds, and ocean waves — to create your perfect audio environment. No installation needed; it runs directly in your browser.
+
+Built with **React + TypeScript**, **Howler.js** for audio, and **Zustand** for state management. All audio files are sourced from open-licensed (CC0 / CC-BY) libraries.
 
 ---
 
-## Primers passos
+## Features
 
-### Requisits
+- **Multi-track mixing** — Play multiple ambient sounds simultaneously
+- **Independent volume control** — Adjust each sound individually
+- **Timer** — Auto-stop all sounds after 1–60 minutes
+- **Preset modes** — Study, Relaxation, Sleep
+- **User accounts** — Register and log in to save your personal preferences
+- **Secure storage** — Passwords hashed with SHA256; data stored in localStorage
+- **Offline support** — Works after the first load, even without internet
+
+---
+
+## Getting Started
+
+### Prerequisites
 - Node.js
 - npm
 
-### Instal·lació
+### Installation
 ```bash
 git clone https://github.com/ZiqiZhu-Lan/CBS.git
 cd CBS
@@ -282,36 +203,115 @@ npm install
 npm start
 ```
 
-L'aplicació s'obrirà a `http://localhost:3000`.
+The app will open at `http://localhost:3000`.
 
 ---
 
-## Tecnologies
+## Tech Stack
 
-| Categoria | Tecnologia |
+| Category | Technology |
 |---|---|
 | Frontend | React 19 + TypeScript |
-| Àudio | Howler.js 2.2.4 |
-| Estat | Zustand 5.0.9 |
-| Estils | CSS Modules |
-| Icones | React Icons |
-| Emmagatzematge | localStorage + SHA256 (Crypto-JS) |
-| Allotjament | GitHub Pages |
+| Audio | Howler.js 2.2.4 |
+| State | Zustand 5.0.9 |
+| Styles | CSS Modules |
+| Icons | React Icons |
+| Storage | localStorage + SHA256 (Crypto-JS) |
+| Hosting | GitHub Pages |
 
 ---
 
-## Fonts d'àudio
+## Sound Sources
 
-Tots els fitxers d'àudio provenen de [Freesound.org](https://freesound.org) amb llicències CC0 o CC-BY.
+All audio files are sourced from [Freesound.org](https://freesound.org) under CC0 or CC-BY licenses.
 
 ---
 
-## Autors
+## Authors
 
 **Yuhan Zhu · Ziqi Zhu** — CFGM Sistemes Microinformàtics i Xarxes (SMX), Institut Puig Castellar
 
 ---
 
-## Llicència
+## License
 
-Aquest projecte està sota la llicència [CC BY-NC-ND 3.0 ES](https://creativecommons.org/licenses/by-nc-nd/3.0/es/).
+This project is licensed under [CC BY-NC-ND 3.0 ES](https://creativecommons.org/licenses/by-nc-nd/3.0/es/).
+
+---
+
+<a name="中文"></a>
+# Custom Background Sound (CBS)
+
+一个用于创建个性化环境音景的网页应用，帮助你专注、放松或入睡。
+
+**在线体验：** [https://ziqizhu-lan.github.io/CBS](https://ziqizhu-lan.github.io/CBS)
+
+---
+
+## 简介
+
+**Custom Background Sound** 让你混合多种环境音——如雨声、风声、篝火、鸟鸣和海浪——打造专属的音频环境。无需安装，直接在浏览器中运行。
+
+使用 **React + TypeScript** 构建，**Howler.js** 处理音频，**Zustand** 管理状态。所有音频文件均来自开放授权（CC0 / CC-BY）素材库。
+
+---
+
+## 功能
+
+- **多轨混音** — 同时播放多种环境音
+- **独立音量控制** — 单独调节每个音轨的音量
+- **计时器** — 1–60 分钟后自动停止所有声音
+- **预设模式** — 学习、放松、睡眠
+- **用户账户** — 注册登录以保存个人偏好设置
+- **安全存储** — 密码经 SHA256 哈希处理，数据存储于 localStorage
+- **离线支持** — 首次加载后无需网络即可使用
+
+---
+
+## 快速开始
+
+### 环境要求
+- Node.js
+- npm
+
+### 安装
+```bash
+git clone https://github.com/ZiqiZhu-Lan/CBS.git
+cd CBS
+npm install
+npm start
+```
+
+应用将在 `http://localhost:3000` 启动。
+
+---
+
+## 技术栈
+
+| 类别 | 技术 |
+|---|---|
+| 前端框架 | React 19 + TypeScript |
+| 音频库 | Howler.js 2.2.4 |
+| 状态管理 | Zustand 5.0.9 |
+| 样式 | CSS Modules |
+| 图标 | React Icons |
+| 存储 | localStorage + SHA256 (Crypto-JS) |
+| 托管 | GitHub Pages |
+
+---
+
+## 音频来源
+
+所有音频文件均来自 [Freesound.org](https://freesound.org)，授权协议为 CC0 或 CC-BY。
+
+---
+
+## 作者
+
+**Yuhan Zhu · Ziqi Zhu** — CFGM Sistemes Microinformàtics i Xarxes (SMX)，Institut Puig Castellar
+
+---
+
+## 许可证
+
+本项目采用 [CC BY-NC-ND 3.0 ES](https://creativecommons.org/licenses/by-nc-nd/3.0/es/) 许可证。
