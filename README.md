@@ -1,46 +1,87 @@
-# Getting Started with Create React App
+# Custom Background Sound (CBS)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A web application for creating personalized ambient soundscapes to help you focus, relax, or sleep.
 
-## Available Scripts
+**Live Demo:** [https://ziqizhu-lan.github.io/CBS](https://ziqizhu-lan.github.io/CBS)
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## About
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+**Custom Background Sound** lets you mix and combine ambient sounds — like rain, wind, campfire, birds, and ocean waves — to create your perfect audio environment. No installation needed; it runs directly in your browser.
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+Built with **React + TypeScript**, **Howler.js** for audio, and **Zustand** for state management. All audio files are sourced from open-licensed (CC0 / CC-BY) libraries.
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Features
 
-### `npm run build`
+- **Multi-track mixing** — Play multiple ambient sounds simultaneously
+- **Independent volume control** — Adjust each sound individually
+- **Timer** — Auto-stop all sounds after 1–60 minutes
+- **Preset modes** — Study, Relaxation, Sleep
+- **User accounts** — Register and log in to save your personal preferences
+- **Secure storage** — Passwords hashed with SHA256; data stored in localStorage
+- **Offline support** — Works after the first load, even without internet
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Getting Started
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Prerequisites
+- Node.js
+- npm
 
-### `npm run eject`
+### Installation
+```bash
+git clone https://github.com/ZiqiZhu-Lan/CBS.git
+cd CBS
+npm install
+npm start
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+The app will open at `http://localhost:3000`.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Build & Deploy
+```bash
+npm run build
+cd build
+git init
+git checkout -b gh-pages
+git add -f .
+git commit -m "Deploy"
+git remote add origin https://github.com/ZiqiZhu-Lan/CBS.git
+git push -f origin gh-pages
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+---
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## Tech Stack
 
-## Learn More
+| Category | Technology |
+|---|---|
+| Frontend | React 19 + TypeScript |
+| Audio | Howler.js 2.2.4 |
+| State | Zustand 5.0.9 |
+| Styles | CSS Modules |
+| Icons | React Icons |
+| Storage | localStorage + SHA256 (Crypto-JS) |
+| Hosting | GitHub Pages |
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+---
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Sound Sources
+
+All audio files are sourced from [Freesound.org](https://freesound.org) under CC0 or CC-BY licenses.
+
+---
+
+## Authors
+
+**Yuhan Zhu · Ziqi Zhu** — CFGM Sistemes Microinformàtics i Xarxes (SMX), Institut Puig Castellar
+
+---
+
+## License
+
+This project is licensed under [CC BY-NC-ND 3.0 ES](https://creativecommons.org/licenses/by-nc-nd/3.0/es/).
