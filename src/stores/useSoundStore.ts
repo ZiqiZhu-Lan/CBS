@@ -1,4 +1,5 @@
-﻿import { create } from 'zustand';
+﻿// 文件路径: src/stores/useSoundStore.ts
+import { create } from 'zustand';
 import { Howl } from 'howler';
 import SHA256 from 'crypto-js/sha256';
 
@@ -11,7 +12,13 @@ import birdFile  from '../sounds/bird.mp3';
 /* ── Types ─────────────────────────────────────────────────────────────── */
 
 export interface SoundState { id: number; volume: number; isPlaying: boolean }
-export interface UserPreferences { globalVolume: number; timerDuration: number; soundStates: SoundState[]; lastActiveIds: number[] }
+export interface UserPreferences { 
+  globalVolume: number; 
+  timerDuration: number; 
+  soundStates: SoundState[]; 
+  lastActiveIds: number[];
+  customPresets?: Record<number, Record<number, number>>; // 新增：保存自定义混音槽位
+}
 export interface Sound extends SoundState { name: string; name_es: string; name_ca: string; category: string; icon: string; audioUrl: string }
 export interface User { id: string; username: string; password?: string; preferences?: UserPreferences }
 export type PresetType = 'focus' | 'relax' | 'sleep';
@@ -32,6 +39,9 @@ export interface AppState {
   setTimerDuration:  (m: number) => void;
   toggleTimer:       () => void;
   applyPreset:       (type: PresetType) => void;
+  saveCustomPreset:  (slot: number) => void; // 新增：保存专属预设
+  applyCustomPreset: (slot: number) => void; // 新增：应用专属预设
+  clearCustomPreset: (slot: number) => void; // 新增：清除专属预设
   applyUrlMix:       (qs: string) => void;
   resetMix:          () => void;
   login:             (u: string, p?: string) => boolean;
@@ -69,23 +79,23 @@ const PRESETS: Record<PresetType, { vols: Record<number, number>; time: number }
 const howls: Record<number, Howl> = {};
 const mixVol = (s: number, g: number) => s * g / 10000;
 const hashPwd = (p: string) => SHA256(p).toString();
-const FADE_DUR = 2000; // 2秒平滑渐入渐出
+const FADE_DUR = 2000;
 
 const playHowl = (h: Howl, targetVol: number) => {
-  h.off('fade'); // 清除可能的渐出
+  h.off('fade');
   if (!h.playing()) {
-    h.volume(0); // 从0开始
+    h.volume(0);
     h.play();
   }
-  h.fade(h.volume(), targetVol, FADE_DUR); // 渐入
+  h.fade(h.volume(), targetVol, FADE_DUR);
 };
 
 const stopHowl = (h: Howl) => {
   h.off('fade');
   if (h.playing()) {
-    h.fade(h.volume(), 0, FADE_DUR); // 渐出
+    h.fade(h.volume(), 0, FADE_DUR);
     h.once('fade', () => {
-      if (h.volume() <= 0.01) h.stop(); // 彻底停止
+      if (h.volume() <= 0.01) h.stop();
     });
   }
 };
@@ -156,6 +166,7 @@ export const useSoundStore = create<AppState>((set, get) => ({
       preferences: {
         globalVolume, timerDuration, lastActiveIds,
         soundStates: sounds.map(({ id, volume, isPlaying }): SoundState => ({ id, volume, isPlaying })),
+        customPresets: user.preferences?.customPresets, // 确保自定义槽位不被覆盖
       },
     });
   },
@@ -164,7 +175,7 @@ export const useSoundStore = create<AppState>((set, get) => ({
     const { timerDuration, isTimerActive, sounds } = get();
     if (!isTimerActive) return;
     if (timerDuration <= 1 / 60) {
-      stopAll(); // 倒计时结束时触发渐出
+      stopAll();
       set({ timerDuration: 0, isTimerActive: false, isGlobalPlaying: false, sounds: mapSounds(sounds, () => ({ isPlaying: false })) });
     } else {
       set({ timerDuration: timerDuration - 1 / 60 });
@@ -245,6 +256,52 @@ export const useSoundStore = create<AppState>((set, get) => ({
     get().rehydrateAudio();
     get()._savePreferences();
   },
+
+  // ── 新增：自定义预设逻辑 ──────────────────────────────────────────────
+  saveCustomPreset(slot) {
+    const { user, sounds } = get();
+    if (!user) return;
+    
+    const active = sounds.filter(s => s.isPlaying);
+    if (!active.length) return; // 没有声音时不保存
+
+    const vols: Record<number, number> = {};
+    active.forEach(s => vols[s.id] = s.volume);
+
+    const prefs = user.preferences || { globalVolume: 80, timerDuration: 15, soundStates: [], lastActiveIds: [] };
+    const customPresets = { ...(prefs.customPresets || {}), [slot]: vols };
+
+    set({ user: { ...user, preferences: { ...prefs, customPresets } } });
+    get()._savePreferences();
+  },
+
+  applyCustomPreset(slot) {
+    const { user, sounds } = get();
+    const vols = user?.preferences?.customPresets?.[slot];
+    if (!vols) return;
+
+    stopAll();
+    set({
+      sounds: mapSounds(sounds, s => ({ isPlaying: s.id in vols, volume: vols[s.id] ?? s.volume })),
+      isGlobalPlaying: true,
+      lastActiveIds: Object.keys(vols).map(Number),
+    });
+    get().rehydrateAudio();
+    get()._savePreferences();
+  },
+
+  clearCustomPreset(slot) {
+    const { user } = get();
+    if (!user?.preferences?.customPresets) return;
+    
+    const prefs = user.preferences;
+    const customPresets = { ...prefs.customPresets };
+    delete customPresets[slot];
+    
+    set({ user: { ...user, preferences: { ...prefs, customPresets } } });
+    get()._savePreferences();
+  },
+  // ───────────────────────────────────────────────────────────────────────
 
   applyUrlMix(qs) {
     if (!qs) return;

@@ -28,6 +28,7 @@ const dict: Record<Lang, Record<string, string>> = {
     deleteConfirm: 'Estàs segur que vols eliminar el teu compte permanentment?', cannotUndo: 'Aquesta acció no es pot desfer.',
     cancel: 'CANCEL·LAR', delete: 'ELIMINAR', standby: 'EN ESPERA', timer: 'TIMER', min: 'MIN',
     share: 'COMPARTIR', copied: 'ENLLAÇ COPIAT', noActive: 'CAP SO ACTIU', reset: 'RESTABLIR',
+    myMixes: 'ELS MEUS MIXOS', saveMix: 'DESA', mix: 'MIX', noActiveToSave: 'ACTIVA ALGUN SO PRIMER', saved: 'DESAT'
   },
   es: {
     estado: 'ESTADO', activo: 'ACTIVO', espera: 'ESPERA', pistas: 'PISTAS', volumen: 'VOLUMEN',
@@ -40,6 +41,7 @@ const dict: Record<Lang, Record<string, string>> = {
     deleteConfirm: '¿Estás seguro de que deseas eliminar tu cuenta permanentemente?', cannotUndo: 'Esta acción no se puede deshacer.',
     cancel: 'CANCELAR', delete: 'ELIMINAR', standby: 'ESPERA', timer: 'TIMER', min: 'MIN',
     share: 'COMPARTIR', copied: 'ENLACE COPIADO', noActive: 'NINGÚN SONIDO ACTIVO', reset: 'REINICIAR',
+    myMixes: 'MIS MIXES', saveMix: 'GUARDAR', mix: 'MIX', noActiveToSave: 'ACTIVA ALGÚN SONIDO PRIMERO', saved: 'GUARDADO'
   },
 };
 
@@ -339,12 +341,10 @@ export default function App() {
         <div className="nav-center"><StatusMonitor /></div>
         <div className="nav-right" style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
           
-          {/* Toast 气泡的相对定位容器结构 */}
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
             <button onClick={handleShare} className="btn-icon" aria-label={d.share} title={d.share}>
               <FiShare2 size={18} aria-hidden="true" />
             </button>
-            
             <AnimatePresence>
               {toastMsg && (
                 <motion.div
@@ -358,9 +358,9 @@ export default function App() {
                   style={{
                     position: 'absolute',
                     top: 'calc(100% + 18px)',
-                    bottom: 'auto', // 强制清除 App.css 中的 bottom 属性，防止冲突拉伸
+                    bottom: 'auto', 
                     left: '50%',
-                    whiteSpace: 'nowrap', // 防止文字折行
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {toastMsg}
@@ -402,6 +402,7 @@ export default function App() {
           </div>
           <h1 id="hero-heading" className="sr-only" style={{ display: 'none' }}>{d.hero1} {d.hero2}</h1>
           <motion.p className="hero-subtitle" {...fadeUp(0.4)}>{d.subtitle}</motion.p>
+          
           <motion.div className="preset-modes" {...fadeUp(0.6)} aria-label="Preset Modes">
             {(['focus', 'relax', 'sleep'] as PresetType[]).map(p => (
               <button key={p} onClick={() => store.applyPreset(p)} className="preset-btn" aria-label={`Preset ${p}`}>{p.toUpperCase()}</button>
@@ -409,6 +410,47 @@ export default function App() {
             <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.2)', margin: '0 10px', alignSelf: 'center' }} aria-hidden="true" />
             <button onClick={store.resetMix} className="preset-btn" aria-label="Reset all volumes and tracks">{d.reset}</button>
           </motion.div>
+
+          {/* 新增：登录后显示的专属自定义混音预设 */}
+          {store.isLoggedIn && (
+            <motion.div className="preset-modes" {...fadeUp(0.7)} aria-label="Custom Presets" style={{ marginTop: '15px' }}>
+              <span style={{ color: 'var(--text-dim)', fontSize: '0.7rem', letterSpacing: '2px', alignSelf: 'center', marginRight: '5px' }}>
+                {d.myMixes}
+              </span>
+              {[1, 2, 3].map(slot => {
+                const hasMix = !!store.user?.preferences?.customPresets?.[slot];
+                return (
+                  <div key={slot} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    {hasMix ? (
+                      <>
+                        <button onClick={() => store.applyCustomPreset(slot)} className="preset-btn" aria-label={`Apply Mix ${slot}`}>
+                          {d.mix} 0{slot}
+                        </button>
+                        <button onClick={() => store.clearCustomPreset(slot)} className="btn-icon" style={{ opacity: 0.5, width: '24px' }} aria-label={`Clear Mix ${slot}`}>
+                          <FiX size={16} />
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          const active = store.sounds.filter(s => s.isPlaying);
+                          if (!active.length) return toast(d.noActiveToSave);
+                          store.saveCustomPreset(slot);
+                          toast(`${d.mix} 0${slot} ${d.saved}`);
+                        }}
+                        className="preset-btn"
+                        style={{ borderStyle: 'dashed', opacity: 0.6 }}
+                        aria-label={`Save Mix ${slot}`}
+                      >
+                        + {d.saveMix} 0{slot}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </motion.div>
+          )}
+
           <motion.div className="scroll-indicator" style={{ opacity: arrowOp } as any} animate={{ y: [0, 15, 0] }} transition={{ repeat: Infinity, duration: 2 }} aria-hidden="true">
             <FiChevronDown size={32} />
           </motion.div>
