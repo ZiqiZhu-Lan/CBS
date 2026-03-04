@@ -1,0 +1,23 @@
+{
+  "files": {
+    "main.css": "/CBS/static/css/main.b4e37725.css",
+    "main.js": "/CBS/static/js/main.788748dc.js",
+    "static/media/wind.png": "/CBS/static/media/wind.1ebd762ba730ab6dba94.png",
+    "static/media/waves.mp3": "/CBS/static/media/waves.e7bdfb844f0801b508ba.mp3",
+    "static/media/rain-on-grasst.mp3": "/CBS/static/media/rain-on-grasst.e9d7b0a1ce0a6a6f505a.mp3",
+    "static/media/bonfire.png": "/CBS/static/media/bonfire.ee27f88e1ec76593fb5f.png",
+    "static/media/waves.png": "/CBS/static/media/waves.44c66158673ca99f5d1e.png",
+    "static/media/rain-on-grasst.png": "/CBS/static/media/rain-on-grasst.21d5f110c6b32668c663.png",
+    "static/media/wind.mp3": "/CBS/static/media/wind.67a14e86443f175be5b9.mp3",
+    "static/media/bonfire.mp3": "/CBS/static/media/bonfire.0152e728fd4694bf2da8.mp3",
+    "static/media/bird.mp3": "/CBS/static/media/bird.50b932974579ea8093e1.mp3",
+    "static/media/bird.png": "/CBS/static/media/bird.a1700a7864c8c0998cc5.png",
+    "index.html": "/CBS/index.html",
+    "main.b4e37725.css.map": "/CBS/static/css/main.b4e37725.css.map",
+    "main.788748dc.js.map": "/CBS/static/js/main.788748dc.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.b4e37725.css",
+    "static/js/main.788748dc.js"
+  ]
+}
