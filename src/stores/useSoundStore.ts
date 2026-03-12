@@ -8,6 +8,9 @@ import wavesFile from '../sounds/waves.mp3';
 import fireFile from '../sounds/bonfire.mp3';
 import windFile from '../sounds/wind.mp3';
 import birdFile from '../sounds/bird.mp3';
+import cricketFile from '../sounds/cricket.mp3';
+import thunderFile from '../sounds/thunder.mp3';
+import woodcrackFile from '../sounds/woodcrack.mp3';
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
 
@@ -19,7 +22,7 @@ export interface UserPreferences {
   lastActiveIds: number[];
   customPresets?: Record<number, Record<number, number>>;
 }
-export interface Sound extends SoundState { name: string; name_es: string; name_ca: string; category: string; icon: string; audioUrl: string }
+export interface Sound extends SoundState { name: string; name_es: string; name_ca: string; category: string; audioUrl: string }
 export interface User { id: string; username: string; password?: string; preferences?: UserPreferences }
 export type PresetType = 'focus' | 'relax' | 'sleep';
 export type Lang = 'ca' | 'es';
@@ -60,14 +63,17 @@ const SK_USERS = 'silence_users_db';
 const SK_CURR = 'silence_curr_user';
 const SK_LANG = 'silence_global_lang';
 const FADE_DUR = 2000;
-const NAME_TO_ID: Record<string, number> = { rain: 1, waves: 3, fire: 5, wind: 6, birds: 7 };
+const NAME_TO_ID: Record<string, number> = { rain: 1, cricket: 2, waves: 3, thunder: 4, fire: 5, wind: 6, birds: 7, woodcrack: 8 };
 
 const BASE: Omit<Sound, 'isPlaying' | 'volume'>[] = [
-  { id: 1, name: 'Rain', name_es: 'LLUVIA DE LA PRADERA', name_ca: 'PLUJA DE LA PRADERIA', category: 'nature', icon: '🌿', audioUrl: rainFile },
-  { id: 3, name: 'Waves', name_es: 'MAREA SERENA', name_ca: 'MAREA SERENA', category: 'nature', icon: '🌊', audioUrl: wavesFile },
-  { id: 5, name: 'Fire', name_es: 'HOGUERA INVERNAL', name_ca: 'FOGUERA HIVERNAL', category: 'nature', icon: '🔥', audioUrl: fireFile },
-  { id: 6, name: 'Wind', name_es: 'BRISA DEL VALLE', name_ca: 'BRISA DE LA VALL', category: 'nature', icon: '💨', audioUrl: windFile },
-  { id: 7, name: 'Birds', name_es: 'CANTO DEL ALBA', name_ca: "CANT DE L'ALBA", category: 'nature', icon: '🕊️', audioUrl: birdFile },
+  { id: 1, name: 'Rain', name_es: 'LLUVIA DE LA PRADERA', name_ca: 'PLUJA DE LA PRADERIA', category: 'nature', audioUrl: rainFile },
+  { id: 2, name: 'Cricket', name_es: 'NOCHE DE GRILLOS', name_ca: 'NIT DE GRILLS', category: 'nature', audioUrl: cricketFile },
+  { id: 3, name: 'Waves', name_es: 'MAREA SERENA', name_ca: 'MAREA SERENA', category: 'nature', audioUrl: wavesFile },
+  { id: 4, name: 'Thunder', name_es: 'TORMENTA LEJANA', name_ca: 'TEMPESTA LLUNYANA', category: 'nature', audioUrl: thunderFile },
+  { id: 5, name: 'Fire', name_es: 'HOGUERA INVERNAL', name_ca: 'FOGUERA HIVERNAL', category: 'nature', audioUrl: fireFile },
+  { id: 6, name: 'Wind', name_es: 'BRISA DEL VALLE', name_ca: 'BRISA DE LA VALL', category: 'nature', audioUrl: windFile },
+  { id: 7, name: 'Birds', name_es: 'CANTO DEL ALBA', name_ca: "CANT DE L'ALBA", category: 'nature', audioUrl: birdFile },
+  { id: 8, name: 'Woodcrack', name_es: 'SUSPIROS DE MADERA', name_ca: 'SOSPIRS DE FUSTA', category: 'nature', audioUrl: woodcrackFile },
 ];
 
 const PRESETS: Record<PresetType, { vols: Record<number, number>; time: number }> = {

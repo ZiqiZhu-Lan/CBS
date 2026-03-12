@@ -4,8 +4,8 @@ import './App.css';
 import { useSoundStore } from './stores/useSoundStore';
 import type { Sound, PresetType, Lang } from './stores/useSoundStore';
 import { FiPlay, FiPause, FiVolume2, FiClock, FiX, FiUser, FiLogOut, FiChevronDown, FiUserX, FiGlobe, FiShare2 } from 'react-icons/fi';
-import { TbTrees, TbWaveSine, TbWind, TbFlame } from 'react-icons/tb';
-import { GiDove } from 'react-icons/gi';
+import { TbCloudRain, TbWind, TbFlame, TbCloudStorm } from 'react-icons/tb';
+import { GiDove, GiCricket, GiBigWave, GiTreeBranch } from 'react-icons/gi';
 import { motion, AnimatePresence, useScroll, useTransform, Variants, useSpring, useMotionValue } from 'framer-motion';
 
 import rainBg from './assets/images/rain-on-grasst.png';
@@ -13,6 +13,9 @@ import wavesBg from './assets/images/waves.png';
 import fireBg from './assets/images/bonfire.png';
 import windBg from './assets/images/wind.png';
 import birdBg from './assets/images/bird.png';
+import cricketBg from './assets/images/cricket.png';
+import thunderBg from './assets/images/thunder.png';
+import woodcrackBg from './assets/images/woodcrack.png';
 
 /* ── i18n Dictionary ───────────────────────────────────────────────────── */
 
@@ -47,14 +50,17 @@ const dict: Record<Lang, Record<string, string>> = {
 
 /* ── Static Maps ───────────────────────────────────────────────────────── */
 
-const bgMap: Record<number, string> = { 1: rainBg, 3: wavesBg, 5: fireBg, 6: windBg, 7: birdBg };
-const iconMap: Record<string, React.ReactNode> = { '🌿': <TbTrees />, '🌊': <TbWaveSine />, '🔥': <TbFlame />, '💨': <TbWind />, '🕊️': <GiDove /> };
+const bgMap: Record<number, string> = { 1: rainBg, 2: cricketBg, 3: wavesBg, 4: thunderBg, 5: fireBg, 6: windBg, 7: birdBg, 8: woodcrackBg };
+const iconMap: Record<number, React.ReactNode> = { 1: <TbCloudRain />, 2: <GiCricket />, 3: <GiBigWave />, 4: <TbCloudStorm />, 5: <TbFlame />, 6: <TbWind />, 7: <GiDove />, 8: <GiTreeBranch /> };
 const authorMap: Record<number, { name: string; url: string }> = {
   1: { name: 'Mjeno', url: 'https://freesound.org/people/Mjeno/sounds/399275/?' },
+  2: { name: 'Defelozedd94', url: 'https://freesound.org/people/Defelozedd94/sounds/522298/' },
   3: { name: 'mmiron', url: 'https://freesound.org/people/mmiron/sounds/130432/' },
+  4: { name: 'TRP', url: 'https://freesound.org/people/TRP/sounds/717845/' },
   5: { name: 'amether', url: 'https://freesound.org/people/amether/sounds/189237/' },
   6: { name: 'santiago.torres1314', url: 'https://freesound.org/people/santiago.torres1314/sounds/677563/' },
   7: { name: 'klankbeeld', url: 'https://freesound.org/people/klankbeeld/sounds/810338/?' },
+  8: { name: 'kyles', url: 'https://freesound.org/people/kyles/sounds/637746/' },
 };
 
 /* ── Animation Presets ─────────────────────────────────────────────────── */
@@ -236,7 +242,7 @@ const SoundCard = React.memo(({ s, i, isDim, hovered, setHovered, toggleSound, u
             </div>
             <div className="card-content">
               <div className="card-top">
-                <div className="icon-wrap" aria-hidden="true">{iconMap[s.icon]}</div>
+                <div className="icon-wrap" aria-hidden="true">{iconMap[s.id]}</div>
                 <button
                   onClick={() => toggleSound(s.id)}
                   className="btn-circular-play"
@@ -251,7 +257,7 @@ const SoundCard = React.memo(({ s, i, isDim, hovered, setHovered, toggleSound, u
               <div className="card-bottom">
                 <h2 className="card-title">{label}</h2>
                 <h4 className="card-eng-title" aria-hidden="true">{s.name.toUpperCase()}</h4>
-                {author && (
+                {author && author.name && (
                   <div className="card-credit">
                     AUDIO BY{' '}
                     <a href={author.url} target="_blank" rel="noopener noreferrer" aria-label={`Audio credit to ${author.name}`}>{author.name}</a>
@@ -381,8 +387,8 @@ export default function App() {
         return;
       }
 
-      // 智能正则匹配 1~5 数字键，极简解析音轨触发
-      const trackMatch = e.code.match(/^(?:Digit|Numpad)([1-5])$/);
+      // 智能正则匹配 1~8 数字键
+      const trackMatch = e.code.match(/^(?:Digit|Numpad)([1-8])$/);
       if (trackMatch) {
         e.preventDefault();
         const index = parseInt(trackMatch[1], 10) - 1;
