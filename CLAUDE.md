@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**SILENCE / 01** is an immersive ambient soundscape web app. Users mix 5 nature audio tracks (Rain, Waves, Fire, Wind, Birds), control volumes independently, set focus timers, and save personal presets. The visual identity is extreme minimalism: near-black backgrounds, white typography, monospace numerics, and hardware-accelerated motion.
+**SILENCE / 01** is an immersive ambient soundscape web app. Users mix 8 nature audio tracks (Rain, Cricket, Waves, Thunder, Fire, Wind, Birds, Woodcrack), control volumes independently, set focus timers, and save personal presets. The visual identity is extreme minimalism: near-black backgrounds, white typography, monospace numerics, and hardware-accelerated motion.
 
 Live: https://ziqizhu-lan.github.io/CBS
 Repo: https://github.com/ZiqiZhu-Lan/CBS
@@ -24,7 +24,7 @@ Branch model: `main` (production) / `feature-update` (active dev)
 | Build | react-scripts (CRA) | 5.0.1 |
 | Deploy | gh-pages | ^6.3.0 |
 
-> **Note:** `react-scripts` 5.0.1 declares a peer dep on TypeScript `^3.2.1 || ^4`, but TypeScript 5 works in practice. This is a known CRA limitation (CRA is no longer maintained). `@types/jest` is pinned at `^27.5.2` to match the Jest 27 version bundled by react-scripts.
+> **Note:** `react-scripts` 5.0.1 declares a peer dep on TypeScript `^3.2.1 || ^4`, but TypeScript 5 works in practice. This is a known CRA limitation (CRA is no longer maintained).
 
 Commands:
 - `npm start` — dev server at localhost:3000
@@ -44,8 +44,8 @@ src/
   react-app-env.d.ts   # CRA type references
   stores/
     useSoundStore.ts   # Zustand store — all audio logic, auth, state, and type definitions
-  assets/images/       # Card background PNGs (rain, waves, bonfire, wind, bird)
-  sounds/              # Audio MP3 files (rain, waves, bonfire, wind, bird)
+  assets/images/       # Card background PNGs (rain, cricket, waves, thunder, bonfire, wind, bird, woodcrack)
+  sounds/              # Audio MP3 files (rain, cricket, waves, thunder, bonfire, wind, bird, woodcrack)
 public/
   sw.js                # Service worker (offline support)
   manifest.json        # PWA manifest
@@ -61,9 +61,28 @@ public/
 
 ### Sound IDs (hardcoded, never change)
 ```
-1 = Rain    3 = Waves    5 = Fire    6 = Wind    7 = Birds
+1 = Rain    2 = Cricket    3 = Waves    4 = Thunder
+5 = Fire    6 = Wind       7 = Birds    8 = Woodcrack
 ```
 The `NAME_TO_ID` map in `useSoundStore.ts` and `bgMap`/`iconMap`/`authorMap` in `App.tsx` all key off these IDs. If a new sound is added, it must get a new unique ID and entries in all four maps.
+
+### Sound Interface
+```ts
+interface Sound extends SoundState {
+  name: string;      // English, used for URL params and audio key mapping
+  name_es: string;   // Spanish display name
+  name_ca: string;   // Catalan display name
+  audioUrl: string;  // Imported MP3 file path
+}
+```
+Note: `icon` and `category` fields have been intentionally removed. Icons are resolved at render time via the `iconMap` lookup in `App.tsx` (keyed by sound ID), not stored on the Sound object.
+
+### Static Maps in App.tsx
+```ts
+const bgMap: Record<number, string>           // sound ID → card background image
+const iconMap: Record<number, React.ReactNode> // sound ID → React icon component
+const authorMap: Record<number, { name; url }>  // sound ID → Freesound credit
+```
 
 ### Volume Math
 ```ts
@@ -72,7 +91,7 @@ mixVol = (trackVolume * globalVolume) / 10000
 Both values are 0–100 integers. Result is 0.0–1.0 for Howler. This is the single source of truth — never compute Howler volume any other way.
 
 ### Timer Storage
-Timer duration is stored in **minutes as a float** (e.g., `15.0`). Each `tick()` subtracts `1/60` (one second). Display converts via `Math.ceil(s * 60)` → mm:ss. Do not change this unit.
+Timer duration is stored in **minutes as a float** (e.g., `15.0`). Each `tick()` subtracts `1/60` (one second). Display converts via `Math.ceil(s * 60)` → mm:ss. Do not change this unit. Available presets: 1, 5, 15, 30, 60 minutes.
 
 ### localStorage Keys
 ```
@@ -164,19 +183,30 @@ All application state is in `useSoundStore.ts`. The store is the single source o
 - `restoreState()` runs at store initialization to rehydrate from `localStorage`.
 - `mapSounds(sounds, fn)` is the standard way to batch-update sound array — use it, do not `sounds.map(...)` inline in `set()` calls.
 - `safeParse<T>(key, fallback)` is the safe localStorage reader — always use it, never `JSON.parse(localStorage.getItem(...))` directly.
+- `applyVolConfig(get, set, vols, timer?)` is the shared helper that `applyPreset`, `applyCustomPreset`, and `applyUrlMix` all delegate to. It handles the full sequence: stop all → set volumes → start playing → save preferences. Any new "apply a mix" action should use this helper.
 - Preset configs live in the `PRESETS` constant. To add a new preset, add it there and to the `PresetType` union type.
+
+---
+
+## UI Hooks (App.tsx)
+
+### `useDict()`
+Returns the active language's dictionary object from `dict[lang]`.
+
+### `useToast(duration)`
+Shared hook for all three HUD notification channels. Returns `[msg, show]` — call `show('text')` to display a toast that auto-clears after `duration` ms. Used three times in `App()` for the three channels (share=3000ms, global=1500ms, track=2000ms).
 
 ---
 
 ## HUD & Notification System (3 channels)
 
-| Channel | Location | Trigger | Duration |
-|---|---|---|---|
-| A (shareToastMsg) | Below share button (top-right) | Share actions, save confirmations | 3000ms |
-| B (globalToastMsg) | Screen center, transparent text | Space / M key | 1500ms |
-| C (trackToastMsg) | Above Dynamic Island | Number keys 1–5 | 2000ms |
+| Channel | Variable | Location | Trigger | Duration |
+|---|---|---|---|---|
+| A (share) | shareToastMsg | Below share button (top-right) | Share actions, save confirmations | 3000ms |
+| B (global) | globalToastMsg | Screen center, transparent text | Space / M key | 1500ms |
+| C (track) | trackToastMsg | Above Dynamic Island | Number keys 1–8 | 2000ms |
 
-New notifications must use one of these three channels. Do not add a fourth channel without strong reason. Channel B is purely for global play-state feedback and must remain visually "ghost-like" (no background, no border).
+New notifications must use one of these three channels. Do not add a fourth channel without strong reason. Channel B is purely for global play-state feedback and must remain visually "ghost-like" (no background, no border). Each channel has a dedicated CSS class (`.share-toast`, `.global-toast`, `.track-toast`).
 
 ---
 
@@ -186,9 +216,9 @@ New notifications must use one of these three channels. Do not add a fourth chan
 |---|---|
 | `Space` | Global play / pause |
 | `M` | Toggle mute (remembers prev volume) |
-| `1`–`5` | Toggle individual tracks |
+| `1`–`8` | Toggle individual tracks (matches sound array index) |
 
-Guard: `if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') return;` — this must remain on all keyboard handlers. Any new shortcuts follow the same pattern.
+Guard: `if (tag === 'INPUT' || tag === 'TEXTAREA') return;` — this must remain on all keyboard handlers. Any new shortcuts follow the same pattern.
 
 ---
 
@@ -228,6 +258,19 @@ The `.hidden-mobile` class is used for the global volume slider (pill-right) and
 
 ---
 
+## CSS Class Naming Conventions
+
+Inline styles that recur across elements have been extracted to named CSS classes. Key extracted classes include:
+
+- **Dropdown**: `.dropdown-menu`, `.dropdown-item`, `.dropdown-item--danger` — user menu popup (hover states handled via CSS `:hover`, not JS)
+- **Toast positioning**: `.global-toast`, `.track-toast`, `.share-toast` — fixed/absolute positioning for the three HUD channels
+- **Nav buttons**: `.btn-lang`, `.btn-user-menu`, `.share-anchor` — navbar interactive elements
+- **Presets layout**: `.preset-divider`, `.custom-presets`, `.custom-presets-label`, `.custom-preset-slot`, `.preset-btn--dashed` — hero preset section
+- **Accessibility**: `.sr-only` — standard screen-reader-only clip-rect pattern
+- **User profile**: `.user-profile-container` — user menu wrapper
+
+---
+
 ## Rules for Adding New Content
 
 ### Style consistency (non-negotiable)
@@ -245,7 +288,9 @@ The `.hidden-mobile` class is used for the global volume slider (pill-right) and
 - `React.memo` is used on `SoundCard` because it is rendered in a list. Apply to any future list-item components.
 - CSS is written in `App.css` with section comments using `/* ── Section Name ─── */` formatting.
 - Do not add external CSS libraries or utility frameworks (Tailwind, etc.).
-- Inline styles are acceptable for one-off layout values (flex gap, specific z-index, etc.) but recurring patterns belong in `App.css`.
+- Recurring inline styles should be extracted to named CSS classes in `App.css`. One-off layout values (specific z-index, flex gap for a unique context) may remain inline.
+- Shared UI logic (like toast notifications) should use custom hooks (e.g., `useToast`) rather than duplicating `useState`/`useCallback` patterns.
+- Shared store logic (like applying a volume config from presets or URLs) should use internal helper functions (e.g., `applyVolConfig`) rather than duplicating the stop→set→play→save sequence.
 
 ### What to preserve during optimisation
 - The 2-second audio crossfade (`FADE_DUR = 2000`)

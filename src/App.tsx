@@ -1,4 +1,5 @@
-﻿import React, { useEffect, useState, useCallback, useRef } from 'react';
+﻿// 文件路径: src/App.tsx
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import './App.css';
 import { useSoundStore } from './stores/useSoundStore';
 import type { Sound, PresetType, Lang } from './stores/useSoundStore';
@@ -189,7 +190,7 @@ const LoginModal = () => {
           <motion.div className="modal-content" onClick={e => e.stopPropagation()} {...modalAnim(0.9, 50, 0.6)} role="dialog" aria-modal="true" aria-labelledby="login-title">
             <button className="modal-close" onClick={() => toggle(false)} aria-label="Close modal"><FiX size={24} aria-hidden="true" /></button>
             <h2 id="login-title">{f.isReg ? d.joinUs : d.welcomeBack}</h2>
-            <form className="auth-form" onSubmit={submit}>
+            <form onSubmit={submit}>
               <div className="input-group">
                 <input autoFocus value={f.u} onChange={e => setF({ ...f, u: e.target.value })} placeholder={d.username} aria-label={d.username} />
               </div>
@@ -265,7 +266,7 @@ const SoundCard = React.memo(({ s, i, isDim, hovered, setHovered, toggleSound, u
                 )}
                 <AnimatePresence>
                   {(s.isPlaying || hovered === s.id) && (
-                    <motion.div className="slider-wrapper" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto', marginTop: 15 }} exit={{ opacity: 0, height: 0 }}>
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto', marginTop: 15 }} exit={{ opacity: 0, height: 0 }}>
                       <div className="card-vol-hit-area">
                         <input
                           type="range" min="0" max="100" value={s.volume}
@@ -496,11 +497,11 @@ export default function App() {
               </div>
             ))}
           </div>
-          <h1 id="hero-heading" className="sr-only" style={{ display: 'none' }}>{d.hero1} {d.hero2}</h1>
+          <h1 id="hero-heading" className="sr-only">{d.hero1} {d.hero2}</h1>
           <motion.p className="hero-subtitle" {...fadeUp(0.4)}>{d.subtitle}</motion.p>
 
           <motion.div className="preset-modes" {...fadeUp(0.6)} aria-label="Preset Modes">
-            {(['focus', 'relax', 'sleep'] as PresetType[]).map(p => (
+            {(['focus', 'relax', 'sleep', 'meditate', 'reading'] as PresetType[]).map(p => (
               <button key={p} onClick={() => store.applyPreset(p)} className="preset-btn" aria-label={`Preset ${p}`}>{p.toUpperCase()}</button>
             ))}
             <div className="preset-divider" aria-hidden="true" />

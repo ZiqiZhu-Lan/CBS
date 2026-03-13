@@ -1,4 +1,5 @@
-﻿import { create } from 'zustand';
+﻿// 文件路径: src/stores/useSoundStore.ts
+import { create } from 'zustand';
 import { Howl } from 'howler';
 import SHA256 from 'crypto-js/sha256';
 
@@ -21,9 +22,9 @@ export interface UserPreferences {
   lastActiveIds: number[];
   customPresets?: Record<number, Record<number, number>>;
 }
-export interface Sound extends SoundState { name: string; name_es: string; name_ca: string; category: string; audioUrl: string }
+export interface Sound extends SoundState { name: string; name_es: string; name_ca: string; audioUrl: string }
 export interface User { id: string; username: string; password?: string; preferences?: UserPreferences }
-export type PresetType = 'focus' | 'relax' | 'sleep';
+export type PresetType = 'focus' | 'relax' | 'sleep' | 'meditate' | 'reading';
 export type Lang = 'ca' | 'es';
 
 export interface AppState {
@@ -41,7 +42,6 @@ export interface AppState {
   toggleMute: () => void;
   updateGlobalVolume: (vol: number) => void;
   setTimerDuration: (m: number) => void;
-  toggleTimer: () => void;
   applyPreset: (type: PresetType) => void;
   saveCustomPreset: (slot: number) => void;
   applyCustomPreset: (slot: number) => void;
@@ -65,20 +65,22 @@ const FADE_DUR = 2000;
 const NAME_TO_ID: Record<string, number> = { rain: 1, cricket: 2, waves: 3, thunder: 4, fire: 5, wind: 6, birds: 7, woodcrack: 8 };
 
 const BASE: Omit<Sound, 'isPlaying' | 'volume'>[] = [
-  { id: 1, name: 'Rain', name_es: 'LLUVIA DE LA PRADERA', name_ca: 'PLUJA DE LA PRADERIA', category: 'nature', audioUrl: rainFile },
-  { id: 2, name: 'Cricket', name_es: 'NOCHE DE GRILLOS', name_ca: 'NIT DE GRILLS', category: 'nature', audioUrl: cricketFile },
-  { id: 3, name: 'Waves', name_es: 'MAREA SERENA', name_ca: 'MAREA SERENA', category: 'nature', audioUrl: wavesFile },
-  { id: 4, name: 'Thunder', name_es: 'TORMENTA LEJANA', name_ca: 'TEMPESTA LLUNYANA', category: 'nature', audioUrl: thunderFile },
-  { id: 5, name: 'Fire', name_es: 'HOGUERA INVERNAL', name_ca: 'FOGUERA HIVERNAL', category: 'nature', audioUrl: fireFile },
-  { id: 6, name: 'Wind', name_es: 'BRISA DEL VALLE', name_ca: 'BRISA DE LA VALL', category: 'nature', audioUrl: windFile },
-  { id: 7, name: 'Birds', name_es: 'CANTO DEL ALBA', name_ca: "CANT DE L'ALBA", category: 'nature', audioUrl: birdFile },
-  { id: 8, name: 'Woodcrack', name_es: 'SUSPIROS DE MADERA', name_ca: 'SOSPIRS DE FUSTA', category: 'nature', audioUrl: woodcrackFile },
+  { id: 1, name: 'Rain', name_es: 'LLUVIA DE LA PRADERA', name_ca: 'PLUJA DE LA PRADERIA', audioUrl: rainFile },
+  { id: 2, name: 'Cricket', name_es: 'NOCHE DE GRILLOS', name_ca: 'NIT DE GRILLS', audioUrl: cricketFile },
+  { id: 3, name: 'Waves', name_es: 'MAREA SERENA', name_ca: 'MAREA SERENA', audioUrl: wavesFile },
+  { id: 4, name: 'Thunder', name_es: 'TORMENTA LEJANA', name_ca: 'TEMPESTA LLUNYANA', audioUrl: thunderFile },
+  { id: 5, name: 'Fire', name_es: 'HOGUERA INVERNAL', name_ca: 'FOGUERA HIVERNAL', audioUrl: fireFile },
+  { id: 6, name: 'Wind', name_es: 'BRISA DEL VALLE', name_ca: 'BRISA DE LA VALL', audioUrl: windFile },
+  { id: 7, name: 'Birds', name_es: 'CANTO DEL ALBA', name_ca: "CANT DE L'ALBA", audioUrl: birdFile },
+  { id: 8, name: 'Woodcrack', name_es: 'SUSPIROS DE MADERA', name_ca: 'SOSPIRS DE FUSTA', audioUrl: woodcrackFile },
 ];
 
 const PRESETS: Record<PresetType, { vols: Record<number, number>; time: number }> = {
   focus: { vols: { 1: 65, 6: 35 }, time: 60 },
   relax: { vols: { 3: 50, 7: 40 }, time: 30 },
   sleep: { vols: { 5: 45, 1: 30 }, time: 60 },
+  meditate: { vols: { 6: 45, 7: 35, 8: 15 }, time: 15 },
+  reading: { vols: { 1: 55, 5: 60, 4: 20 }, time: 45 },
 };
 
 /* ── Audio Helpers ─────────────────────────────────────────────────────── */
@@ -233,8 +235,6 @@ export const useSoundStore = create<AppState>((set, get) => ({
     set({ timerDuration: m, isTimerActive: m > 0 });
     get()._savePreferences();
   },
-
-  toggleTimer: () => set(s => ({ isTimerActive: !s.isTimerActive && s.timerDuration > 0 })),
 
   toggleGlobalPlay: () => {
     const state = get();
