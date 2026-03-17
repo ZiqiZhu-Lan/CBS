@@ -1,4 +1,4 @@
-﻿// 文件路径: src/App.tsx
+// 文件路径: src/App.tsx
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import './App.css';
 import { useSoundStore } from './stores/useSoundStore';
@@ -16,6 +16,7 @@ import birdBg from './assets/images/bird.png';
 import cricketBg from './assets/images/cricket.png';
 import thunderBg from './assets/images/thunder.png';
 import woodcrackBg from './assets/images/woodcrack.png';
+import logoImg from './assets/images/logo-512x512.png';
 
 /* ── i18n Dictionary ───────────────────────────────────────────────────── */
 
@@ -94,7 +95,7 @@ const CustomCursor = () => {
     let last = false;
     const onMove = (e: MouseEvent) => {
       x.set(e.clientX - 10); y.set(e.clientY - 10);
-      const h = !!(e.target as HTMLElement).closest('button, a, select, input, .sound-editorial-card, .vol-wrapper, .card-vol-hit-area, .preset-btn');
+      const h = !!(e.target as HTMLElement).closest('button, a, select, input, .sound-editorial-card, .vol-wrapper, .card-vol-hit-area, .preset-btn, .navbar-logo');
       if (h !== last) setHover(last = h);
     };
     window.addEventListener('mousemove', onMove, { passive: true });
@@ -307,6 +308,13 @@ export default function App() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  const [logoRipple, setLogoRipple] = useState(false);
+  const triggerRipple = () => {
+    if (logoRipple) return;
+    setLogoRipple(true);
+    setTimeout(() => setLogoRipple(false), 800);
+  };
+
   const [shareToastMsg, showShareToast] = useToast(3000);
   const [globalToastMsg, showGlobalToast] = useToast(1500);
   const [trackToastMsg, showTrackToast] = useToast(2000);
@@ -425,7 +433,13 @@ export default function App() {
 
       {/* Navbar */}
       <motion.nav className="navbar" initial={{ y: -100 }} animate={{ y: 0 }} transition={trans()} aria-label="Main Navigation">
-        <span className="logo" aria-hidden="true">SILENCE <span className="logo-sub">/ 01</span></span>
+        <div 
+          className={`navbar-logo ${logoRipple ? 'ripple-active' : ''}`} 
+          aria-hidden="true" 
+          onClick={triggerRipple}
+        >
+          <img src={logoImg} alt="Silence Logo" className="logo-img" />
+        </div>
         <div className="nav-center"><StatusMonitor /></div>
         <div className="nav-right">
 

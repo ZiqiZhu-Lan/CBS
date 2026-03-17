@@ -1,3 +1,4 @@
+/* 文件路径: src/App.css */
 /* ═══════════════════════════════════════════════════════════════════════════
    SILENCE / 01 — Optimised Stylesheet
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -83,18 +84,61 @@ body {
   transition: padding 0.4s ease;
 }
 
-.logo {
+.navbar-logo {
   flex: 1;
   display: flex;
   justify-content: flex-start;
-  font-weight: 600;
-  letter-spacing: 0.4rem;
-  font-size: 0.9rem;
-  white-space: nowrap;
+  align-items: center;
+  height: 60px;
+  cursor: none;
+  position: relative;
 }
 
-.logo-sub {
-  opacity: 0.3;
+.navbar-logo::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 15px;
+  width: 0;
+  height: 0;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.navbar-logo.ripple-active::after {
+  animation: soundwavePulse 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes soundwavePulse {
+  0% { width: 10px; height: 10px; opacity: 0.8; border-width: 2px; }
+  100% { width: 120px; height: 120px; opacity: 0; border-width: 0px; }
+}
+
+@keyframes staticBreathe {
+  0%, 100% {
+    opacity: 0.6;
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.1));
+  }
+  50% {
+    opacity: 0.95;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.4));
+  }
+}
+
+.logo-img {
+  height: 100%;
+  width: auto;
+  object-fit: contain;
+  animation: staticBreathe 6s ease-in-out infinite;
+  transition: filter 0.3s ease;
+}
+
+.navbar-logo:hover .logo-img {
+  filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.6));
 }
 
 .nav-center {
@@ -1056,10 +1100,6 @@ body {
   .nav-right {
     gap: 16px !important;
   }
-
-  .logo {
-    letter-spacing: 0.2rem;
-  }
 }
 
 @media (max-width: 900px) {
@@ -1069,7 +1109,7 @@ body {
     align-items: flex-start;
   }
 
-  .logo,
+  .navbar-logo,
   .nav-right {
     flex: 0 1 auto;
   }

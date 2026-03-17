@@ -1,4 +1,4 @@
-﻿// 文件路径: src/stores/useSoundStore.ts
+// 文件路径: src/stores/useSoundStore.ts
 import { create } from 'zustand';
 import { Howl } from 'howler';
 import SHA256 from 'crypto-js/sha256';
