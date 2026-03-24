@@ -1,4 +1,3 @@
-// 文件路径: src/stores/useSoundStore.ts
 import { create } from 'zustand';
 import { Howl } from 'howler';
 import SHA256 from 'crypto-js/sha256';
@@ -142,7 +141,6 @@ const restoreState = () => {
     : { ...base, globalVolume: 80, timerDuration: 15, sounds: freshSounds(), isGlobalPlaying: false, lastActiveIds: [] as number[] };
 };
 
-/** Apply a volume config: stop all, set sounds, start playing. Shared by presets and URL mixes. */
 const applyVolConfig = (get: () => AppState, set: (p: Partial<AppState> | ((s: AppState) => Partial<AppState>)) => void, vols: Record<number, number>, timer?: { active: boolean; duration: number }) => {
   stopAll();
   set(state => ({

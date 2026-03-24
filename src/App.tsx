@@ -32,7 +32,11 @@ const dict: Record<Lang, Record<string, string>> = {
     deleteConfirm: 'Estàs segur que vols eliminar el teu compte permanentment?', cannotUndo: 'Aquesta acció no es pot desfer.',
     cancel: 'CANCEL·LAR', delete: 'ELIMINAR', standby: 'EN ESPERA', timer: 'TIMER', min: 'MIN',
     share: 'COMPARTIR', copied: 'ENLLAÇ COPIAT', noActive: 'CAP SO ACTIU', reset: 'RESTABLIR',
-    myMixes: 'ELS MEUS MIXOS', saveMix: 'DESA', mix: 'MIX', noActiveToSave: 'ACTIVA ALGUN SO PRIMER', saved: 'DESAT'
+    myMixes: 'ELS MEUS MIXOS', saveMix: 'DESA', mix: 'MIX', noActiveToSave: 'ACTIVA ALGUN SO PRIMER', saved: 'DESAT',
+    legalTitle: 'Informació Legal',
+    disclaimer: 'Aquest projecte no està associat amb cap projecte original i és exclusivament amb finalitats educatives. No es recopilen dades d\'usuari.',
+    terms: 'Termes',
+    privacy: 'Privadesa'
   },
   es: {
     estado: 'ESTADO', activo: 'ACTIVO', espera: 'ESPERA', pistas: 'PISTAS', volumen: 'VOLUMEN',
@@ -45,7 +49,11 @@ const dict: Record<Lang, Record<string, string>> = {
     deleteConfirm: '¿Estás seguro de que deseas eliminar tu cuenta permanentemente?', cannotUndo: 'Esta acción no se puede deshacer.',
     cancel: 'CANCELAR', delete: 'ELIMINAR', standby: 'ESPERA', timer: 'TIMER', min: 'MIN',
     share: 'COMPARTIR', copied: 'ENLACE COPIADO', noActive: 'NINGÚN SONIDO ACTIVO', reset: 'REINICIAR',
-    myMixes: 'MIS MIXES', saveMix: 'GUARDAR', mix: 'MIX', noActiveToSave: 'ACTIVA ALGÚN SONIDO PRIMERO', saved: 'GUARDADO'
+    myMixes: 'MIS MIXES', saveMix: 'GUARDAR', mix: 'MIX', noActiveToSave: 'ACTIVA ALGÚN SONIDO PRIMERO', saved: 'GUARDADO',
+    legalTitle: 'Información Legal',
+    disclaimer: 'Este proyecto no está asociado con ningún proyecto original y es exclusivamente para fines educativos. No se recopilan datos de usuario.',
+    terms: 'Términos',
+    privacy: 'Privacidad'
   },
 };
 
@@ -95,7 +103,7 @@ const CustomCursor = () => {
     let last = false;
     const onMove = (e: MouseEvent) => {
       x.set(e.clientX - 10); y.set(e.clientY - 10);
-      const h = !!(e.target as HTMLElement).closest('button, a, select, input, .sound-editorial-card, .vol-wrapper, .card-vol-hit-area, .preset-btn, .navbar-logo');
+      const h = !!(e.target as HTMLElement).closest('button, a, select, input, .sound-editorial-card, .vol-wrapper, .card-vol-hit-area, .preset-btn, .document-logo');
       if (h !== last) setHover(last = h);
     };
     window.addEventListener('mousemove', onMove, { passive: true });
@@ -312,7 +320,7 @@ export default function App() {
   const triggerRipple = () => {
     if (logoRipple) return;
     setLogoRipple(true);
-    setTimeout(() => setLogoRipple(false), 800);
+    setTimeout(() => setLogoRipple(false), 1200);
   };
 
   const [shareToastMsg, showShareToast] = useToast(3000);
@@ -431,18 +439,16 @@ export default function App() {
         )}
       </AnimatePresence>
 
+      {/* 固定在网页文档流左上角（随页面滚动）的 Logo */}
+      <div className={`document-logo ${logoRipple ? 'ripple-active' : ''}`} aria-hidden="true" onClick={triggerRipple}>
+        <img src={logoImg} alt="Silence Logo" className="logo-img" />
+      </div>
+
       {/* Navbar */}
       <motion.nav className="navbar" initial={{ y: -100 }} animate={{ y: 0 }} transition={trans()} aria-label="Main Navigation">
-        <div 
-          className={`navbar-logo ${logoRipple ? 'ripple-active' : ''}`} 
-          aria-hidden="true" 
-          onClick={triggerRipple}
-        >
-          <img src={logoImg} alt="Silence Logo" className="logo-img" />
-        </div>
+        <div className="nav-left"></div>
         <div className="nav-center"><StatusMonitor /></div>
         <div className="nav-right">
-
           <div className="share-anchor">
             <button onClick={handleShare} className="btn-icon" aria-label={d.share} title={d.share}>
               <FiShare2 size={18} aria-hidden="true" />
@@ -609,6 +615,17 @@ export default function App() {
           </div>
         </div>
       </motion.div>
+
+      {/* 法律免责声明 */}
+      <footer className="legal-footer">
+        <div className="legal-footer-content">
+          <h3 className="legal-title">{d.legalTitle}</h3>
+          <p className="legal-desc">{d.disclaimer}</p>
+          <div className="legal-links">
+            <span>© 2026 SILENCE / 01</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
