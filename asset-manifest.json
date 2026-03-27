@@ -1,0 +1,28 @@
+{
+  "files": {
+    "main.css": "/CBS/static/css/main.e59acd1d.css",
+    "main.js": "/CBS/static/js/main.f48bb5ec.js",
+    "static/media/wind.png": "/CBS/static/media/wind.1ebd762ba730ab6dba94.png",
+    "static/media/waves.mp3": "/CBS/static/media/waves.e7bdfb844f0801b508ba.mp3",
+    "static/media/rain-on-grasst.mp3": "/CBS/static/media/rain-on-grasst.e9d7b0a1ce0a6a6f505a.mp3",
+    "static/media/bonfire.png": "/CBS/static/media/bonfire.ee27f88e1ec76593fb5f.png",
+    "static/media/waves.png": "/CBS/static/media/waves.44c66158673ca99f5d1e.png",
+    "static/media/rain-on-grasst.png": "/CBS/static/media/rain-on-grasst.21d5f110c6b32668c663.png",
+    "static/media/wind.mp3": "/CBS/static/media/wind.67a14e86443f175be5b9.mp3",
+    "static/media/cricket.png": "/CBS/static/media/cricket.9de099260a11d7cd5404.png",
+    "static/media/thunder.mp3": "/CBS/static/media/thunder.7556c0d69aa9da398bf4.mp3",
+    "static/media/cricket.mp3": "/CBS/static/media/cricket.7146b1f9a1a96a88d0ad.mp3",
+    "static/media/bonfire.mp3": "/CBS/static/media/bonfire.0152e728fd4694bf2da8.mp3",
+    "static/media/thunder.png": "/CBS/static/media/thunder.8dfd8338d8b61b47e4fa.png",
+    "static/media/woodcrack.png": "/CBS/static/media/woodcrack.4080eabbd9332622a9d2.png",
+    "static/media/bird.mp3": "/CBS/static/media/bird.50b932974579ea8093e1.mp3",
+    "static/media/bird.png": "/CBS/static/media/bird.a1700a7864c8c0998cc5.png",
+    "static/media/woodcrack.mp3": "/CBS/static/media/woodcrack.35add39670a5b8247b76.mp3",
+    "static/media/logo-512x512.png": "/CBS/static/media/logo-512x512.b037f6d2240e33cecc95.png",
+    "index.html": "/CBS/index.html"
+  },
+  "entrypoints": [
+    "static/css/main.e59acd1d.css",
+    "static/js/main.f48bb5ec.js"
+  ]
+}
