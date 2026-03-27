@@ -7,7 +7,7 @@
 
 Una aplicació web per crear paisatges sonors ambientals personalitzats que t'ajudin a concentrar-te, relaxar-te o dormir.
 
-**Demo en viu:** [https://ziqizhu-lan.github.io/CBS](https://ziqizhu-lan.github.io/CBS)
+**Demo en viu:** [https://cbs-silence.github.io/CBS/](https://cbs-silence.github.io/CBS/)
 
 ---
 
@@ -37,7 +37,7 @@ Desenvolupat amb **React + TypeScript**, **Howler.js** per a l'àudio i **Zustan
 - Node.js
 - npm
 ```bash
-git clone https://github.com/ZiqiZhu-Lan/CBS.git
+git clone https://github.com/CBS-SILENCE/CBS.git
 cd CBS
 npm install
 npm start
@@ -84,7 +84,7 @@ Aquest projecte està sota la llicència [CC BY-NC-ND 3.0 ES](https://creativeco
 
 Una aplicación web para crear paisajes sonoros ambientales personalizados que te ayuden a concentrarte, relajarte o dormir.
 
-**Demo en vivo:** [https://ziqizhu-lan.github.io/CBS](https://ziqizhu-lan.github.io/CBS)
+**Demo en vivo:** [https://cbs-silence.github.io/CBS/](https://cbs-silence.github.io/CBS/)
 
 ---
 
@@ -114,7 +114,7 @@ Desarrollado con **React + TypeScript**, **Howler.js** para el audio y **Zustand
 - Node.js
 - npm
 ```bash
-git clone https://github.com/ZiqiZhu-Lan/CBS.git
+git clone https://github.com/CBS-SILENCE/CBS.git
 cd CBS
 npm install
 npm start
@@ -161,7 +161,7 @@ Este proyecto está bajo la licencia [CC BY-NC-ND 3.0 ES](https://creativecommon
 
 A web application for creating personalized ambient soundscapes to help you focus, relax, or sleep.
 
-**Live Demo:** [https://ziqizhu-lan.github.io/CBS](https://ziqizhu-lan.github.io/CBS)
+**Live Demo:** [https://cbs-silence.github.io/CBS/](https://cbs-silence.github.io/CBS/)
 
 ---
 
@@ -191,7 +191,7 @@ Built with **React + TypeScript**, **Howler.js** for audio, and **Zustand** for 
 - Node.js
 - npm
 ```bash
-git clone https://github.com/ZiqiZhu-Lan/CBS.git
+git clone https://github.com/CBS-SILENCE/CBS.git
 cd CBS
 npm install
 npm start
@@ -238,7 +238,7 @@ This project is licensed under [CC BY-NC-ND 3.0 ES](https://creativecommons.org/
 
 一个用于创建个性化环境音景的网页应用，帮助你专注、放松或入睡。
 
-**在线体验：** [https://ziqizhu-lan.github.io/CBS](https://ziqizhu-lan.github.io/CBS)
+**在线体验：** [https://cbs-silence.github.io/CBS/](https://cbs-silence.github.io/CBS/)
 
 ---
 
@@ -268,7 +268,7 @@ This project is licensed under [CC BY-NC-ND 3.0 ES](https://creativecommons.org/
 - Node.js
 - npm
 ```bash
-git clone https://github.com/ZiqiZhu-Lan/CBS.git
+git clone https://github.com/CBS-SILENCE/CBS.git
 cd CBS
 npm install
 npm start
