@@ -102,15 +102,71 @@ body {
   gap: 24px;
 }
 
+/* ─── Custom Tooltip (replaces native title) ─── */
+.nav-tooltip {
+  position: relative;
+}
+
+.nav-tooltip::before {
+  content: '';
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-bottom-color: rgba(15, 15, 15, 0.92);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 999;
+}
+
+.nav-tooltip::after {
+  content: attr(aria-label);
+  position: absolute;
+  top: calc(100% + 15px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 15, 15, 0.92);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  transition: opacity 0.15s ease;
+  z-index: 999;
+}
+
+.nav-tooltip:hover::before,
+.nav-tooltip:hover::after {
+  opacity: 1;
+  transition: opacity 0.25s ease 0.4s;
+}
+
+/* Hide tooltip when dropdown is open */
+.nav-tooltip[aria-expanded="true"]::before,
+.nav-tooltip[aria-expanded="true"]::after {
+  display: none;
+}
+
 /* ─── Logo (固定在网页顶部文档流，深空高雅光效) ─── */
 .document-logo {
   position: absolute;
-  top: 40px; 
+  top: 40px;
   left: 6vw;
   width: 150px;
   height: 150px;
   cursor: none;
-  z-index: 101; 
+  z-index: 101;
 }
 
 /* 极光底座保持不变 */
@@ -176,13 +232,13 @@ body {
 }
 
 @keyframes staticBreathe {
-  0%, 100% { 
-    opacity: 0.6; 
-    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.1)); 
+  0%, 100% {
+    opacity: 0.6;
+    filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.1));
   }
-  50% { 
-    opacity: 0.95; 
-    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.4)); 
+  50% {
+    opacity: 0.95;
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.4));
   }
 }
 
@@ -194,7 +250,7 @@ body {
   width: auto;
   object-fit: contain;
   transform-origin: center center;
-  opacity: 0.6; 
+  opacity: 0.6;
   animation: staticBreathe 6s ease-in-out infinite;
   transition: filter 0.3s ease;
   will-change: transform, filter, opacity;
@@ -692,6 +748,8 @@ body {
 
 .dynamic-pill {
   pointer-events: auto;
+  position: relative;
+  overflow: hidden;
   background: rgba(20, 20, 20, 0.7);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -704,6 +762,22 @@ body {
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
   will-change: transform, backdrop-filter;
   transform: translateZ(0);
+}
+
+/* ── Timer Progress Bar ───────────────────────────────────────────────────── */
+.timer-progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 100px;
+  box-shadow:
+    0 0 4px 1px rgba(255, 255, 255, 0.5),
+    0 0 12px 2px rgba(255, 255, 255, 0.15);
+  transition: width 1s linear;
+  pointer-events: none;
+  z-index: 3;
 }
 
 .pill-left {
@@ -1217,6 +1291,12 @@ body {
   .dynamic-pill {
     padding: 12px 20px;
   }
+
+  /* Hide tooltips on mobile — touch users don't hover */
+  .nav-tooltip::before,
+  .nav-tooltip::after {
+    display: none !important;
+  }
 }
 
 @media (hover: none) and (pointer: coarse) {
@@ -1226,6 +1306,12 @@ body {
 
   * {
     cursor: auto !important;
+  }
+
+  /* Explicitly kill tooltips on touch devices */
+  .nav-tooltip::before,
+  .nav-tooltip::after {
+    display: none !important;
   }
 }
 

@@ -28,7 +28,7 @@ export type Lang = 'ca' | 'es';
 
 export interface AppState {
   sounds: Sound[]; globalVolume: number; isGlobalPlaying: boolean;
-  timerDuration: number; isTimerActive: boolean;
+  timerDuration: number; initialTimerDuration: number; isTimerActive: boolean;
   user: User | null; isLoggedIn: boolean; isLoginModalOpen: boolean;
   lastActiveIds: number[]; lang: Lang;
   isMuted: boolean; prevVolume: number;
@@ -147,7 +147,7 @@ const applyVolConfig = (get: () => AppState, set: (p: Partial<AppState> | ((s: A
     sounds: mapSounds(state.sounds, s => ({ isPlaying: s.id in vols, volume: vols[s.id] ?? s.volume })),
     isGlobalPlaying: true,
     lastActiveIds: Object.keys(vols).map(Number),
-    ...(timer ? { isTimerActive: timer.active, timerDuration: timer.duration } : {}),
+    ...(timer ? { isTimerActive: timer.active, timerDuration: timer.duration, initialTimerDuration: timer.duration } : {}),
   }));
   get().rehydrateAudio();
   get()._savePreferences();
@@ -158,6 +158,7 @@ const applyVolConfig = (get: () => AppState, set: (p: Partial<AppState> | ((s: A
 export const useSoundStore = create<AppState>((set, get) => ({
   ...restoreState(),
   isTimerActive: false,
+  initialTimerDuration: 0,
   isLoginModalOpen: false,
   isMuted: false,
   prevVolume: 80,
@@ -230,7 +231,7 @@ export const useSoundStore = create<AppState>((set, get) => ({
   },
 
   setTimerDuration: (m) => {
-    set({ timerDuration: m, isTimerActive: m > 0 });
+    set({ timerDuration: m, isTimerActive: m > 0, initialTimerDuration: m });
     get()._savePreferences();
   },
 
@@ -290,7 +291,7 @@ export const useSoundStore = create<AppState>((set, get) => ({
 
   resetMix: () => {
     stopAll();
-    set({ sounds: mapSounds(get().sounds, () => ({ isPlaying: false, volume: 50 })), globalVolume: 80, isGlobalPlaying: false, isTimerActive: false, timerDuration: 15, lastActiveIds: [] });
+    set({ sounds: mapSounds(get().sounds, () => ({ isPlaying: false, volume: 50 })), globalVolume: 80, isGlobalPlaying: false, isTimerActive: false, timerDuration: 15, initialTimerDuration: 0, lastActiveIds: [] });
     get()._savePreferences();
   },
 
@@ -319,7 +320,7 @@ export const useSoundStore = create<AppState>((set, get) => ({
   logout: () => {
     stopAll();
     localStorage.removeItem(SK_CURR);
-    set({ user: null, isLoggedIn: false, sounds: freshSounds(), globalVolume: 80, isGlobalPlaying: false, timerDuration: 15, isTimerActive: false, lastActiveIds: [] });
+    set({ user: null, isLoggedIn: false, sounds: freshSounds(), globalVolume: 80, isGlobalPlaying: false, timerDuration: 15, isTimerActive: false, initialTimerDuration: 0, lastActiveIds: [] });
   },
 
   deleteAccount: () => {

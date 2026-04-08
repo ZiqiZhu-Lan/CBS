@@ -1,4 +1,4 @@
-# CLAUDE.md — SILENCE / 01 (Custom Background Sound)
+# AGENTS.md — SILENCE / 01 (Custom Background Sound)
 
 ## Project Overview
 
@@ -44,7 +44,7 @@ src/
   react-app-env.d.ts   # CRA type references
   stores/
     useSoundStore.ts   # Zustand store — all audio logic, auth, state, and type definitions
-  assets/images/       # Card background PNGs (rain, cricket, waves, thunder, bonfire, wind, bird, woodcrack) + logo-512x512.png
+  assets/images/       # Card background PNGs (rain, cricket, waves, thunder, bonfire, wind, bird, woodcrack)
   sounds/              # Audio MP3 files (rain, cricket, waves, thunder, bonfire, wind, bird, woodcrack)
 public/
   sw.js                # Service worker (offline support)
@@ -106,7 +106,7 @@ silence_global_lang — Lang ('ca' | 'es')
 
 Supported: **Catalan (`ca`)** and **Spanish (`es`)**. Default is `ca`.
 
-All user-visible strings live in the `dict` object at the top of `App.tsx`. Every new UI string must have entries in BOTH `ca` and `es`. The `useDict()` hook returns the active language's dict. String keys use Spanish-named camelCase (e.g., `volumen`, `pistas`, `estado`). The legal footer uses `legalTitle` and `disclaimer` keys.
+All user-visible strings live in the `dict` object at the top of `App.tsx`. Every new UI string must have entries in BOTH `ca` and `es`. The `useDict()` hook returns the active language's dict. String keys use Spanish-named camelCase (e.g., `volumen`, `pistas`, `estado`).
 
 The `Sound` type carries `name_es` and `name_ca` for bilingual track names. `name` (English) is used only for URL parameters and audio key mapping.
 
@@ -159,25 +159,7 @@ const modalAnim = (s = 0.9, y = 30, dur = 0.4) => (...)
 - Transition durations: micro-interactions = 0.2–0.4s; content reveals = 0.8–1.5s; audio crossfades = 2000ms (in Howler, not CSS).
 
 ### Custom Cursor
-The white dot cursor (`.custom-cursor`) uses `mix-blend-mode: difference`. It scales to `1.5` over interactive elements. The selector list in `CustomCursor` (`button, a, select, input, .sound-editorial-card, .vol-wrapper, .card-vol-hit-area, .preset-btn, .document-logo`) must be updated whenever a new interactive element is added. On touch devices it is hidden via `@media (hover: none) and (pointer: coarse)`.
-
-### Navbar Layout
-
-The navbar uses a three-column flex layout with `justify-content: space-between`: `.nav-left` (`flex: 1`, empty spacer), `.nav-center` (`flex: 0 1 auto`, HUD pill), `.nav-right` (`flex: 1`, action buttons). The empty `.nav-left` is structurally required — its `flex: 1` mirrors `.nav-right`'s `flex: 1`, creating symmetric pressure that keeps `.nav-center` horizontally centered. Do not remove `.nav-left` even though it has no visible content; doing so will push the HUD to the left edge. The entire navbar uses `mix-blend-mode: difference`.
-
-### Logo System
-
-The logo (`.document-logo`) is positioned absolutely at the page top-left (`top: 40px; left: 6vw`), outside the navbar document flow, at `z-index: 101`. It consists of three visual layers:
-
-- **Aurora base** (`::before`): A slowly rotating radial gradient halo (`@keyframes auroraRotate`, 8s loop) that provides a subtle ambient glow behind the logo.
-- **Ripple ring** (`::after`): A click-triggered expanding ring (`@keyframes deepEcho`, 1.2s) that fires once per click via the `ripple-active` CSS class, controlled by `logoRipple` state and `triggerRipple()` in `App()`.
-- **Logo image** (`.logo-img`): The tree branch artwork with a continuous breathing animation (`@keyframes staticBreathe`, 6s loop). On ripple activation, this is overridden by `@keyframes etherealBloom` (1.2s) which produces a bright flash + scale pulse.
-
-The logo is purely decorative (`aria-hidden="true"`, `alt=""`). Its four `@keyframes` animations are CSS-only (not Framer Motion) and use `will-change: transform, filter, opacity` for GPU compositing.
-
-### Legal Footer
-
-The page ends with a `.legal-footer` containing a title, disclaimer text, and copyright year. The corresponding `dict` keys are `legalTitle` and `disclaimer` (both `ca` and `es`). The footer uses a darker background (`#0a0a0a`) with a top border, and includes generous bottom padding (`130px`) to clear the Dynamic Island overlay.
+The white dot cursor (`.custom-cursor`) uses `mix-blend-mode: difference`. It scales to `1.5` over interactive elements. The selector list in `CustomCursor` (`button, a, select, input, .sound-editorial-card, .vol-wrapper, .card-vol-hit-area, .preset-btn`) must be updated whenever a new interactive element is added. On touch devices it is hidden via `@media (hover: none) and (pointer: coarse)`.
 
 ---
 
@@ -286,8 +268,6 @@ Inline styles that recur across elements have been extracted to named CSS classe
 - **Presets layout**: `.preset-divider`, `.custom-presets`, `.custom-presets-label`, `.custom-preset-slot`, `.preset-btn--dashed` — hero preset section
 - **Accessibility**: `.sr-only` — standard screen-reader-only clip-rect pattern
 - **User profile**: `.user-profile-container` — user menu wrapper
-- **Logo**: `.document-logo`, `.logo-img` — positioned logo container and image; `@keyframes auroraRotate`, `deepEcho`, `staticBreathe`, `etherealBloom` for layered ambient/click animations
-- **Legal footer**: `.legal-footer`, `.legal-footer-content`, `.legal-title`, `.legal-desc`, `.legal-links` — page-bottom disclaimer section
 
 ---
 
@@ -303,7 +283,7 @@ Inline styles that recur across elements have been extracted to named CSS classe
 7. **New sounds** require: new ID, entry in `BASE`, `bgMap`, `iconMap`, `authorMap`, `NAME_TO_ID`, a background image in `assets/images/`, and an MP3 in `sounds/`. Sound credit must link to Freesound.org.
 
 ### Code style
-- Components are defined as named `const` functions (`const Foo = () => ...`), not `function Foo()`. Exception: the root `App` component uses `export default function App()` as a CRA convention.
+- Components are defined as named `const` functions (`const Foo = () => ...`), not `function Foo()`.
 - All components that receive store data call `useSoundStore()` directly or receive props — no Context API.
 - `React.memo` is used on `SoundCard` because it is rendered in a list. Apply to any future list-item components.
 - CSS is written in `App.css` with section comments using `/* ── Section Name ─── */` formatting.
@@ -340,3 +320,177 @@ npm run deploy
 # Pushes build/ to the gh-pages branch of origin
 ```
 The `homepage` field in `package.json` is `https://ZiqiZhu-Lan.github.io/CBS` — this is required for correct asset paths in the GitHub Pages build.
+
+---
+
+## Current Phase Priority
+
+The current priority is **visual excellence, polish, and overall coherence**, not shipping speed.
+
+When tradeoffs appear, prefer:
+- Better composition, spacing, motion, and perceived quality
+- Stronger consistency with the SILENCE / 01 identity
+- Fewer features with higher finish quality
+- Slower implementation if it materially improves the final experience
+
+Do not prioritize "good enough" UI if a clearly more refined solution is achievable within reasonable scope.
+
+---
+
+## Quality Bar
+
+This project uses a **hard-gate quality standard** for normal work.
+
+A change should not be considered complete unless it satisfies all applicable checks below:
+- Visual style matches the existing editorial minimalism
+- New UI text is added to both `ca` and `es`
+- Mobile and desktop layouts are both reviewed
+- Keyboard behavior is preserved
+- Existing audio behavior is preserved
+- No existing motion, HUD feedback, or accessibility attribute regresses
+- Repeated inline styles are extracted when they become recurring
+- New interactive elements are added to the CustomCursor selector logic if needed
+
+If a change fails one of these checks, it is not "done".
+
+---
+
+## Experimental Exception Rule
+
+Occasional experimental or impulsive changes are allowed, but they must be treated as experiments rather than normal production-ready work.
+
+When doing experimental work:
+- Clearly label it as experimental in the task or commit message
+- Keep the scope isolated and reversible
+- Do not weaken core rules unless the experiment is specifically about replacing them
+- Before merging or keeping the experiment, bring it back up to the full hard-gate standard
+
+Rule of thumb:
+- Exploration can be messy
+- Final state cannot be messy
+
+---
+
+## Definition Of Done
+
+A UI-facing change is complete only if all applicable items below are true:
+- The result looks intentional on desktop and mobile
+- Typography, spacing, and motion feel consistent with the rest of the app
+- No new base colors, radius systems, or animation language were introduced
+- All bilingual strings are complete
+- Hover, active, pressed, focus, and transition states were reviewed
+- Touch-device behavior was considered
+- If the change is interactive, cursor behavior and keyboard behavior were checked
+- If the change affects sound state, `rehydrateAudio()` flow and fade behavior still hold
+- If the change affects persistence, localStorage behavior still works
+- If the change affects share URLs, parsing and immediate cleanup still work
+
+---
+
+## Visual Review Checklist
+
+Because this phase prioritizes beauty and finish quality, every meaningful UI change should be reviewed against this checklist before being considered complete:
+- Does the new element feel like it belongs to SILENCE / 01, or does it feel generic?
+- Is the spacing rhythm consistent with nearby sections?
+- Are typography scale, casing, and letter spacing correct?
+- Does the motion feel calm, premium, and deliberate rather than flashy?
+- Does the screen still feel minimal, or has visual noise increased?
+- Does the interaction feel better than before, not just different?
+- On mobile, does the layout still feel composed rather than merely compressed?
+
+If the answer to any of these is "no", continue refining.
+
+---
+
+## Manual Smoke Test
+
+Before considering a non-trivial change finished, run this manual smoke test:
+
+1. Load the app on desktop.
+2. Toggle tracks with mouse/touch and verify the correct sound responds.
+3. Press `Space` and verify global play/pause feedback still appears.
+4. Press `M` and verify mute behavior still restores previous volume correctly.
+5. Press keys `1` through `8` and verify track toggles still map correctly.
+6. Adjust individual track volume and global volume, then confirm mix balance is correct.
+7. Start a timer preset and verify countdown display behaves correctly.
+8. Save or apply any relevant preset flow affected by the change.
+9. Test a share URL such as `?rain=60&waves=30` and confirm it applies, then clears from the address bar.
+10. Refresh the page and verify expected persisted state restores correctly.
+11. Open the app on mobile width and verify layout, readability, and tap targets.
+12. Confirm no obvious regression in HUD toasts, modal animation, or card hover/play visuals.
+
+If the change touches auth:
+- Register
+- Log in
+- Log out
+- Delete account flow
+
+If the change touches PWA/offline behavior:
+- Verify service worker behavior still does not obviously break first-load or refresh flows
+
+---
+
+## Target Devices
+
+The baseline support matrix for review is:
+- Desktop Chrome
+- Desktop Safari
+- iPhone Safari
+- Android Chrome
+
+A UI change is not fully reviewed until it has been considered across both desktop and mobile interaction models.
+
+Special attention areas:
+- Custom cursor must not affect touch devices
+- Navbar/HUD spacing must remain composed at tablet and phone widths
+- Buttons and sliders must remain usable without hover
+- Motion should still feel smooth on lower-powered mobile devices
+
+---
+
+## Regression Hotspots
+
+The following areas are considered high-risk and must be treated carefully during edits:
+- `FADE_DUR = 2000`
+- `mixVol = (trackVolume * globalVolume) / 10000`
+- `applyVolConfig(...)`
+- `rehydrateAudio()`
+- The three-channel toast system
+- Keyboard shortcut guards for `INPUT` and `TEXTAREA`
+- URL share parsing plus immediate `replaceState` cleanup
+- Media Session metadata and playback state sync
+- Card hover dim/blur behavior
+- Grayscale-to-color transition when a track is active
+
+Do not refactor these casually.
+
+---
+
+## Documentation Language Rule
+
+The working documentation language should be **Chinese-first** for team guidance, with code identifiers, commands, API names, and type names kept in English where needed.
+
+Use this style:
+- Explanations and rules in Chinese
+- Commands in original English form
+- Code symbols in original English form
+- Avoid mixing large blocks of English prose into process documentation unless necessary
+
+If a rule is important, write it plainly and operationally rather than stylistically.
+
+---
+
+## Scope Note
+
+There is currently **no planned near-term work to add new sound tracks**.
+
+Unless explicitly requested, optimization and design work should focus on:
+- Existing 8-track experience
+- UX polish
+- Visual refinement
+- Stability
+- Responsiveness
+- Accessibility
+- Perceived audio quality
+
+Do not introduce "future-proofing" complexity for hypothetical new tracks unless there is a concrete task requiring it.

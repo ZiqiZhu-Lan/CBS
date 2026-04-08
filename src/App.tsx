@@ -1,4 +1,4 @@
-// 文件路径: src/App.tsx
+﻿// 文件路径: src/App.tsx
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import './App.css';
 import { useSoundStore } from './stores/useSoundStore';
@@ -36,7 +36,9 @@ const dict: Record<Lang, Record<string, string>> = {
     legalTitle: 'Informació Legal',
     disclaimer: 'Aquest projecte no està associat amb cap projecte original i és exclusivament amb finalitats educatives. No es recopilen dades d\'usuari.',
     terms: 'Termes',
-    privacy: 'Privadesa'
+    privacy: 'Privadesa',
+    changeLang: 'CANVIAR IDIOMA',
+    userMenu: "MENÚ D'USUARI",
   },
   es: {
     estado: 'ESTADO', activo: 'ACTIVO', espera: 'ESPERA', pistas: 'PISTAS', volumen: 'VOLUMEN',
@@ -53,7 +55,9 @@ const dict: Record<Lang, Record<string, string>> = {
     legalTitle: 'Información Legal',
     disclaimer: 'Este proyecto no está asociado con ningún proyecto original y es exclusivamente para fines educativos. No se recopilan datos de usuario.',
     terms: 'Términos',
-    privacy: 'Privacidad'
+    privacy: 'Privacidad',
+    changeLang: 'CAMBIAR IDIOMA',
+    userMenu: 'MENÚ DE USUARIO',
   },
 };
 
@@ -332,6 +336,15 @@ export default function App() {
   const heroSc = useTransform(smooth, [0, 0.4], [1, 0.9]);
   const arrowOp = useTransform(smooth, [0, 0.05], [1, 0]);
 
+  /* logo scroll dissolve: fade out + float up over 0→35% scroll */
+  const logoOp = useTransform(smooth, [0, 0.35], [1, 0]);
+  const logoY = useTransform(smooth, [0, 0.35], [0, -30]);
+
+  /* timer progress: 0 → 100 as time elapses */
+  const timerProgress = store.initialTimerDuration > 0
+    ? Math.min(100, Math.max(0, ((store.initialTimerDuration - store.timerDuration) / store.initialTimerDuration) * 100))
+    : 0;
+
   useEffect(() => {
     if (window.location.search) {
       store.applyUrlMix(window.location.search);
@@ -439,10 +452,10 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* 固定在网页文档流左上角（随页面滚动）的 Logo */}
-      <div className={`document-logo ${logoRipple ? 'ripple-active' : ''}`} aria-hidden="true" onClick={triggerRipple}>
+      {/* Logo — scroll dissolve */}
+      <motion.div className={`document-logo ${logoRipple ? 'ripple-active' : ''}`} aria-hidden="true" onClick={triggerRipple} style={{ opacity: logoOp, y: logoY } as any}>
         <img src={logoImg} alt="Silence Logo" className="logo-img" />
-      </div>
+      </motion.div>
 
       {/* Navbar */}
       <motion.nav className="navbar" initial={{ y: -100 }} animate={{ y: 0 }} transition={trans()} aria-label="Main Navigation">
@@ -450,7 +463,7 @@ export default function App() {
         <div className="nav-center"><StatusMonitor /></div>
         <div className="nav-right">
           <div className="share-anchor">
-            <button onClick={handleShare} className="btn-icon" aria-label={d.share} title={d.share}>
+            <button onClick={handleShare} className="btn-icon nav-tooltip" aria-label={d.share}>
               <FiShare2 size={18} aria-hidden="true" />
             </button>
             {/* Channel A: share toast */}
@@ -470,13 +483,13 @@ export default function App() {
             </AnimatePresence>
           </div>
 
-          <button onClick={() => store.setLang(store.lang === 'ca' ? 'es' : 'ca')} className="btn-icon btn-lang" aria-label="Change Language" title="Change Language">
+          <button onClick={() => store.setLang(store.lang === 'ca' ? 'es' : 'ca')} className="btn-icon btn-lang nav-tooltip" aria-label={d.changeLang}>
             <FiGlobe size={16} aria-hidden="true" /> {store.lang === 'ca' ? 'CA' : 'ES'}
           </button>
 
           {store.isLoggedIn ? (
             <div className="user-profile-container" ref={userMenuRef}>
-              <button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} className="btn-icon btn-user-menu" aria-label="User Menu" aria-expanded={isUserMenuOpen}>
+              <button onClick={() => setIsUserMenuOpen(!isUserMenuOpen)} className="btn-icon btn-user-menu nav-tooltip" aria-label={d.userMenu} aria-expanded={isUserMenuOpen}>
                 <FiUser aria-hidden="true" /> {store.user?.username}
                 <motion.div animate={{ rotate: isUserMenuOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
                   <FiChevronDown size={14} aria-hidden="true" />
@@ -575,6 +588,20 @@ export default function App() {
       {/* Dynamic Island */}
       <motion.div className="dynamic-island-wrapper" initial={{ y: 150, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={trans(0.8)}>
         <div className="dynamic-pill" role="region" aria-label="Global Controls">
+          {/* Timer progress bar */}
+          <AnimatePresence>
+            {store.isTimerActive && store.initialTimerDuration > 0 && (
+              <motion.div
+                className="timer-progress-bar"
+                style={{ width: `${timerProgress}%` }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ opacity: { duration: 0.4 } }}
+                aria-hidden="true"
+              />
+            )}
+          </AnimatePresence>
           <div className="pill-left">
             <div className="master-play-wrap">
               <button onClick={store.toggleGlobalPlay} className={`pill-master-btn ${store.isGlobalPlaying ? 'active' : ''}`} aria-label={store.isGlobalPlaying ? 'Pause global audio' : 'Play global audio'} aria-pressed={store.isGlobalPlaying}>
