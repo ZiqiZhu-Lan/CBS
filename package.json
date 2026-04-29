@@ -2,9 +2,9 @@
   "name": "custom-background-sound",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://ZiqiZhu-Lan.github.io/CBS",
+  "homepage": "https://cbs-silence.github.io/CBS",
   "dependencies": {
-    "crypto-js": "^4.2.0",
+    "crypto-js": "^4.2.0https",
     "framer-motion": "^11.18.2",
     "howler": "^2.2.4",
     "react": "^19.2.4",
