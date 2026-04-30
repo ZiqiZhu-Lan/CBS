@@ -1,3 +1,4 @@
+// 文件路径: src/stores/useSoundStore.ts
 import { create } from 'zustand';
 import { Howl } from 'howler';
 import SHA256 from 'crypto-js/sha256';
@@ -28,329 +29,380 @@ export type Lang = 'ca' | 'es';
 
 export interface AppState {
   sounds: Sound[]; globalVolume: number; isGlobalPlaying: boolean;
-  timerDuration: number; initialTimerDuration: number; isTimerActive: boolean;
-  user: User | null; isLoggedIn: boolean; isLoginModalOpen: boolean;
-  isShareModalOpen: boolean; // 新增分享弹窗状态
+  isMuted: boolean; isTimerActive: boolean; timerDuration: number;
+  initialTimerDuration: number; isLoggedIn: boolean;
+  user: User | null; isLoginModalOpen: boolean; isShareModalOpen: boolean;
   lastActiveIds: number[]; lang: Lang;
-  isMuted: boolean; prevVolume: number;
-  _savePreferences: () => void;
-  tick: () => void;
-  rehydrateAudio: () => void;
+  
   toggleSound: (id: number) => void;
-  updateSoundVolume: (id: number, vol: number) => void;
+  updateSoundVolume: (id: number, volume: number) => void;
   toggleGlobalPlay: () => void;
+  updateGlobalVolume: (volume: number) => void;
   toggleMute: () => void;
-  updateGlobalVolume: (vol: number) => void;
-  setTimerDuration: (m: number) => void;
+  setTimerDuration: (minutes: number) => void;
+  tick: () => void;
   applyPreset: (type: PresetType) => void;
-  applyRandomMix: () => void;
-  saveCustomPreset: (slot: number) => void;
   applyCustomPreset: (slot: number) => void;
+  saveCustomPreset: (slot: number) => void;
   clearCustomPreset: (slot: number) => void;
-  applyUrlMix: (qs: string) => void;
+  applyRandomMix: () => void;
   resetMix: () => void;
-  login: (u: string, p?: string) => boolean;
-  register: (u: string, p?: string) => boolean;
+  applyUrlMix: (qs: string) => void;
+  login: (u: string, p: string) => boolean;
+  register: (u: string, p: string) => boolean;
   logout: () => void;
   deleteAccount: () => void;
-  toggleLoginModal: (open?: boolean) => void;
-  toggleShareModal: (open?: boolean) => void; // 新增分享弹窗开关
-  setLang: (lang: Lang) => void;
+  toggleLoginModal: (open: boolean) => void;
+  toggleShareModal: (open: boolean) => void;
+  rehydrateAudio: () => void;
+  setLang: (l: Lang) => void;
 }
 
-/* ── Constants ─────────────────────────────────────────────────────────── */
+/* ── Config & Data ─────────────────────────────────────────────────────── */
 
-const SK_USERS = 'silence_users_db';
-const SK_CURR = 'silence_curr_user';
-const SK_LANG = 'silence_global_lang';
-const FADE_DUR = 2000;
-const NAME_TO_ID: Record<string, number> = { rain: 1, cricket: 2, waves: 3, thunder: 4, fire: 5, wind: 6, birds: 7, woodcrack: 8 };
-
-const BASE: Omit<Sound, 'isPlaying' | 'volume'>[] = [
-  { id: 1, name: 'Rain', name_es: 'LLUVIA DE LA PRADERA', name_ca: 'PLUJA DE LA PRADERIA', audioUrl: rainFile },
-  { id: 2, name: 'Cricket', name_es: 'NOCHE DE GRILLOS', name_ca: 'NIT DE GRILLS', audioUrl: cricketFile },
-  { id: 3, name: 'Waves', name_es: 'MAREA SERENA', name_ca: 'MAREA SERENA', audioUrl: wavesFile },
-  { id: 4, name: 'Thunder', name_es: 'TORMENTA LEJANA', name_ca: 'TEMPESTA LLUNYANA', audioUrl: thunderFile },
-  { id: 5, name: 'Fire', name_es: 'HOGUERA INVERNAL', name_ca: 'FOGUERA HIVERNAL', audioUrl: fireFile },
-  { id: 6, name: 'Wind', name_es: 'BRISA DEL VALLE', name_ca: 'BRISA DE LA VALL', audioUrl: windFile },
-  { id: 7, name: 'Birds', name_es: 'CANTO DEL ALBA', name_ca: "CANT DE L'ALBA", audioUrl: birdFile },
-  { id: 8, name: 'Woodcrack', name_es: 'SUSPIROS DE MADERA', name_ca: 'SOSPIRS DE FUSTA', audioUrl: woodcrackFile },
+const SOUNDS_DATA = [
+  { id: 1, name: 'rain', name_es: 'LLUVIA', name_ca: 'PLUJA', audioUrl: rainFile },
+  { id: 2, name: 'cricket', name_es: 'GRILLO', name_ca: 'GRILL', audioUrl: cricketFile },
+  { id: 3, name: 'waves', name_es: 'OLAS', name_ca: 'ONES', audioUrl: wavesFile },
+  { id: 4, name: 'thunder', name_es: 'TRUENO', name_ca: 'TRO', audioUrl: thunderFile },
+  { id: 5, name: 'fire', name_es: 'FUEGO', name_ca: 'FOC', audioUrl: fireFile },
+  { id: 6, name: 'wind', name_es: 'VIENTO', name_ca: 'VENT', audioUrl: windFile },
+  { id: 7, name: 'birds', name_es: 'PÁJAROS', name_ca: 'OCELLS', audioUrl: birdFile },
+  { id: 8, name: 'woodcrack', name_es: 'MADERA CRUJIENDO', name_ca: 'FUSTA CRUIXINT', audioUrl: woodcrackFile },
 ];
 
-const PRESETS: Record<PresetType, { vols: Record<number, number>; time: number }> = {
-  focus: { vols: { 1: 65, 6: 35 }, time: 60 },
-  relax: { vols: { 3: 50, 7: 40 }, time: 30 },
-  sleep: { vols: { 5: 45, 1: 30 }, time: 60 },
-  meditate: { vols: { 6: 45, 7: 35, 8: 15 }, time: 15 },
-  reading: { vols: { 1: 55, 5: 60, 4: 20 }, time: 45 },
+const PRESETS: Record<PresetType, Partial<Record<number, number>>> = {
+  focus: { 1: 40, 6: 30, 8: 10 },
+  relax: { 3: 50, 7: 30, 6: 20 },
+  sleep: { 1: 30, 4: 20, 6: 10 },
+  meditate: { 3: 40, 2: 20, 5: 15 },
+  reading: { 1: 25, 5: 35, 8: 15 },
 };
 
-/* ── Audio Helpers ─────────────────────────────────────────────────────── */
+const SK_USERS = 'cbs_users';
+const SK_CURR = 'cbs_curr_user';
+const SK_LANG = 'cbs_lang';
 
-const howls: Record<number, Howl> = {};
-const mixVol = (s: number, g: number) => (s * g) / 10000;
+/* ── Validation Utilities (核心修复：严格的数据清洗墙) ─────────────── */
+
+// 检查单个 SoundState 是否有效，如果缺失关键属性或类型不符，直接抛弃
+const isValidSoundState = (s: any): s is SoundState => {
+  if (!s || typeof s !== 'object') return false;
+  if (typeof s.id !== 'number' || isNaN(s.id)) return false;
+  if (typeof s.volume !== 'number' || isNaN(s.volume)) return false;
+  if (typeof s.isPlaying !== 'boolean') return false;
+  return true;
+};
+
+// 重建 Sound 数组，遇到非法状态数据会重置回默认值
+const reconstructSounds = (states?: any[]): Sound[] => {
+  const safeStates = Array.isArray(states) ? states.filter(isValidSoundState) : [];
+  return SOUNDS_DATA.map(d => {
+    const s = safeStates.find(x => x.id === d.id);
+    return {
+      ...d,
+      volume: s ? Math.max(0, Math.min(100, s.volume)) : 50,
+      isPlaying: s ? s.isPlaying : false
+    };
+  });
+};
+
+/* ── Utilities ─────────────────────────────────────────────────────────── */
+
 const hashPwd = (p: string) => SHA256(p).toString();
-const safeParse = <T,>(key: string, fb: T): T => { try { return JSON.parse(localStorage.getItem(key)!) || fb; } catch { return fb; } };
-const freshSounds = (): Sound[] => BASE.map(s => ({ ...s, volume: 50, isPlaying: false }));
-const mapSounds = (sounds: Sound[], fn: (s: Sound) => Partial<Sound>): Sound[] => sounds.map(s => ({ ...s, ...fn(s) }));
-
-const playHowl = (h: Howl, targetVol: number) => {
-  h.off('fade');
-  if (!h.playing()) { h.volume(0); h.play(); }
-  h.fade(h.volume(), targetVol, FADE_DUR);
+const safeParse = <T>(k: string, def: T): T => {
+  try {
+    const v = localStorage.getItem(k);
+    return v ? JSON.parse(v) : def;
+  } catch { return def; }
 };
 
-const stopHowl = (h: Howl) => {
-  h.off('fade');
-  if (h.playing()) {
-    h.fade(h.volume(), 0, FADE_DUR);
-    h.once('fade', () => { if (h.volume() <= 0.01) h.stop(); });
+const freshSounds = (): Sound[] => SOUNDS_DATA.map(s => ({ ...s, volume: 50, isPlaying: false }));
+const mapIds = (s: SoundState[]) => s.filter(x => x.isPlaying).map(x => x.id);
+
+let howls: Record<number, Howl> = {};
+
+const initAudio = (id: number, url: string, loop = true) => {
+  if (!howls[id]) {
+    howls[id] = new Howl({ src: [url], loop, html5: true, preload: true, volume: 0 });
   }
-};
-
-const stopAll = () => Object.values(howls).forEach(stopHowl);
-
-const ensureHowl = (id: number, url: string, vol: number, gVol: number): Howl => {
-  if (!howls[id]) howls[id] = new Howl({ src: [url], html5: false, loop: true, volume: mixVol(vol, gVol) });
   return howls[id];
 };
 
-const fromPrefs = (prefs: UserPreferences) => {
-  const sounds = BASE.map(def => ({ ...def, volume: 50, isPlaying: false, ...prefs.soundStates?.find(st => st.id === def.id) }));
-  return {
-    globalVolume: prefs.globalVolume ?? 80,
-    timerDuration: prefs.timerDuration || 15,
-    sounds,
-    isGlobalPlaying: sounds.some(s => s.isPlaying),
-    lastActiveIds: prefs.lastActiveIds || [],
-  };
+const updateAudioVol = (id: number, vol: number, isPlaying: boolean, globalVol: number, globalPlay: boolean, muted: boolean) => {
+  const h = howls[id];
+  if (!h) return;
+  const target = (isPlaying && globalPlay && !muted) ? (vol / 100) * (globalVol / 100) : 0;
+  
+  if (target > 0) {
+    if (!h.playing()) {
+      h.volume(0);
+      h.play();
+      h.fade(0, target, 500);
+    } else {
+      h.fade(h.volume(), target, 200);
+    }
+  } else {
+    if (h.playing()) {
+      h.fade(h.volume(), 0, 500);
+      h.once('fade', () => { if (h.volume() === 0) h.pause(); });
+    }
+  }
 };
 
-const persistUser = (user: User) => {
-  const users: User[] = safeParse(SK_USERS, []);
-  const idx = users.findIndex(u => u.username === user.username);
-  if (idx === -1) return;
-  users[idx] = user;
-  localStorage.setItem(SK_USERS, JSON.stringify(users));
-  localStorage.setItem(SK_CURR, JSON.stringify(user));
+const stopAll = () => Object.values(howls).forEach(h => { h.fade(h.volume(), 0, 500); h.once('fade', () => h.stop()); });
+
+const syncAudio = (s: AppState) => {
+  s.sounds.forEach(snd => updateAudioVol(snd.id, snd.volume, snd.isPlaying, s.globalVolume, s.isGlobalPlaying, s.isMuted));
 };
 
-const restoreState = () => {
-  const user = safeParse<User | null>(SK_CURR, null);
-  const lang = safeParse<Lang>(SK_LANG, 'ca');
-  const base = { user, lang, isLoggedIn: !!user };
-  return user?.preferences
-    ? { ...base, ...fromPrefs(user.preferences) }
-    : { ...base, globalVolume: 80, timerDuration: 15, sounds: freshSounds(), isGlobalPlaying: false, lastActiveIds: [] as number[] };
-};
-
-const applyVolConfig = (get: () => AppState, set: (p: Partial<AppState> | ((s: AppState) => Partial<AppState>)) => void, vols: Record<number, number>, timer?: { active: boolean; duration: number }) => {
-  stopAll();
-  set(state => ({
-    sounds: mapSounds(state.sounds, s => ({ isPlaying: s.id in vols, volume: vols[s.id] ?? s.volume })),
-    isGlobalPlaying: true,
-    lastActiveIds: Object.keys(vols).map(Number),
-    ...(timer ? { isTimerActive: timer.active, timerDuration: timer.duration, initialTimerDuration: timer.duration } : {}),
-  }));
-  get().rehydrateAudio();
-  get()._savePreferences();
-};
-
-const RESET_STATE = { globalVolume: 80, isGlobalPlaying: false, isTimerActive: false, timerDuration: 15, initialTimerDuration: 0, lastActiveIds: [] as number[] };
+const toStates = (sounds: Sound[]): SoundState[] =>
+  sounds.map(s => ({ id: s.id, volume: s.volume, isPlaying: s.isPlaying }));
 
 /* ── Store ─────────────────────────────────────────────────────────────── */
 
-export const useSoundStore = create<AppState>((set, get) => ({
-  ...restoreState(),
-  isTimerActive: false,
-  initialTimerDuration: 0,
-  isLoginModalOpen: false,
-  isShareModalOpen: false,
-  isMuted: false,
-  prevVolume: 80,
+const INITIAL_LANG: Lang = (localStorage.getItem(SK_LANG) as Lang) || 'ca';
+const RESET_STATE = { globalVolume: 100, isGlobalPlaying: false, isMuted: false, isTimerActive: false, timerDuration: 0, initialTimerDuration: 0, lastActiveIds: [] };
 
-  _savePreferences: () => {
-    const { isLoggedIn, user, globalVolume, timerDuration, lastActiveIds, sounds } = get();
-    if (!isLoggedIn || !user) return;
-    persistUser({
-      ...user,
-      preferences: {
-        globalVolume, timerDuration, lastActiveIds,
-        soundStates: sounds.map(({ id, volume, isPlaying }) => ({ id, volume, isPlaying })),
-        customPresets: user.preferences?.customPresets,
-      },
-    });
-  },
+export const useSoundStore = create<AppState>((set, get) => {
+  // 从 LocalStorage 中读取用户信息和偏好
+  const savedUser = safeParse<User | null>(SK_CURR, null);
+  
+  // 严格重构 sounds 数组，防止脏数据注入
+  let initialSounds = freshSounds();
+  if (savedUser?.preferences?.soundStates) {
+     initialSounds = reconstructSounds(savedUser.preferences.soundStates);
+  }
 
-  tick: () => {
-    const state = get();
-    if (!state.isTimerActive) return;
-    if (state.timerDuration <= 1 / 60) {
-      stopAll();
-      set({ timerDuration: 0, isTimerActive: false, isGlobalPlaying: false, sounds: mapSounds(state.sounds, () => ({ isPlaying: false })) });
-    } else {
-      set({ timerDuration: state.timerDuration - 1 / 60 });
-    }
-  },
+  const fromPrefs = (p: UserPreferences) => ({
+    globalVolume: typeof p.globalVolume === 'number' ? Math.max(0, Math.min(100, p.globalVolume)) : 100,
+    timerDuration: typeof p.timerDuration === 'number' ? Math.max(0, p.timerDuration) : 0,
+    initialTimerDuration: typeof p.timerDuration === 'number' ? Math.max(0, p.timerDuration) : 0,
+    sounds: reconstructSounds(p.soundStates),
+    lastActiveIds: Array.isArray(p.lastActiveIds) ? p.lastActiveIds.filter(id => typeof id === 'number') : [],
+  });
 
-  rehydrateAudio: () => {
-    const { sounds, globalVolume } = get();
-    sounds.forEach(s => {
-      if (s.isPlaying && s.audioUrl)
-        playHowl(ensureHowl(s.id, s.audioUrl, s.volume, globalVolume), mixVol(s.volume, globalVolume));
-    });
-  },
-
-  toggleSound: (id) => {
-    if (!get().sounds.find(s => s.id === id)?.audioUrl) return;
+  const update = (patch: Partial<AppState>) => {
     set(s => {
-      const upd = s.sounds.map(track => {
-        if (track.id !== id) return track;
-        const playing = !track.isPlaying;
-        const h = ensureHowl(id, track.audioUrl, track.volume, s.globalVolume);
-        playing ? playHowl(h, mixVol(track.volume, s.globalVolume)) : stopHowl(h);
-        return { ...track, isPlaying: playing };
+      const next = { ...s, ...patch };
+      if (next.user && Object.keys(patch).some(k => ['sounds', 'globalVolume', 'timerDuration', 'lastActiveIds'].includes(k))) {
+        next.user = {
+          ...next.user,
+          preferences: {
+            globalVolume: next.globalVolume,
+            timerDuration: next.timerDuration,
+            soundStates: toStates(next.sounds),
+            lastActiveIds: next.lastActiveIds,
+            customPresets: next.user.preferences?.customPresets,
+          }
+        };
+        // 保存时去除所有敏感信息（如密码）并深度验证
+        const users = safeParse<User[]>(SK_USERS, []);
+        const idx = users.findIndex(u => u.username === next.user?.username);
+        if (idx !== -1) {
+           users[idx] = { ...users[idx], preferences: next.user.preferences };
+           localStorage.setItem(SK_USERS, JSON.stringify(users));
+        }
+        localStorage.setItem(SK_CURR, JSON.stringify(next.user));
+      }
+      syncAudio(next);
+      return next;
+    });
+  };
+
+  return {
+    ...RESET_STATE,
+    user: savedUser,
+    isLoggedIn: !!savedUser,
+    isLoginModalOpen: false,
+    isShareModalOpen: false,
+    lang: INITIAL_LANG,
+    sounds: initialSounds,
+    ...(savedUser?.preferences ? fromPrefs(savedUser.preferences) : {}),
+
+    setLang: l => { localStorage.setItem(SK_LANG, l); set({ lang: l }); },
+    
+    toggleSound: id => update({
+      sounds: get().sounds.map(s => s.id === id ? { ...s, isPlaying: !s.isPlaying } : s),
+      isGlobalPlaying: true
+    }),
+    
+    updateSoundVolume: (id, v) => update({
+      sounds: get().sounds.map(s => s.id === id ? { ...s, volume: Math.max(0, Math.min(100, v)) } : s)
+    }),
+    
+    toggleGlobalPlay: () => {
+      const s = get();
+      if (!s.isGlobalPlaying && s.sounds.every(x => !x.isPlaying) && s.lastActiveIds.length) {
+        update({ isGlobalPlaying: true, sounds: s.sounds.map(snd => s.lastActiveIds.includes(snd.id) ? { ...snd, isPlaying: true } : snd) });
+      } else {
+        update({ isGlobalPlaying: !s.isGlobalPlaying, lastActiveIds: s.isGlobalPlaying ? mapIds(s.sounds) : s.lastActiveIds });
+      }
+    },
+    
+    updateGlobalVolume: v => update({ globalVolume: Math.max(0, Math.min(100, v)) }),
+    
+    toggleMute: () => update({ isMuted: !get().isMuted }),
+    
+    setTimerDuration: m => update({ timerDuration: m * 60, initialTimerDuration: m * 60, isTimerActive: m > 0 }),
+    
+    tick: () => {
+      const s = get();
+      if (s.timerDuration <= 0) return;
+      if (s.timerDuration === 1) update({ timerDuration: 0, isTimerActive: false, isGlobalPlaying: false, lastActiveIds: mapIds(s.sounds), sounds: s.sounds.map(snd => ({ ...snd, isPlaying: false })) });
+      else update({ timerDuration: s.timerDuration - 1 });
+    },
+    
+    applyPreset: p => update({
+      isGlobalPlaying: true,
+      sounds: get().sounds.map(s => PRESETS[p][s.id] !== undefined ? { ...s, isPlaying: true, volume: PRESETS[p][s.id]! } : { ...s, isPlaying: false })
+    }),
+
+    applyCustomPreset: slot => {
+      const s = get();
+      const cp = s.user?.preferences?.customPresets?.[slot];
+      if (!cp) return;
+      update({
+        isGlobalPlaying: true,
+        sounds: s.sounds.map(snd => cp[snd.id] !== undefined ? { ...snd, isPlaying: true, volume: cp[snd.id] } : { ...snd, isPlaying: false })
       });
-      return { sounds: upd, isGlobalPlaying: upd.some(t => t.isPlaying) };
-    });
-    get()._savePreferences();
-  },
+    },
 
-  updateSoundVolume: (id, vol) => {
-    howls[id]?.volume(mixVol(vol, get().globalVolume));
-    set(s => ({ sounds: s.sounds.map(t => t.id === id ? { ...t, volume: vol } : t) }));
-    get()._savePreferences();
-  },
+    saveCustomPreset: slot => {
+      const s = get();
+      if (!s.user) return;
+      const act = s.sounds.filter(snd => snd.isPlaying);
+      if (!act.length) return;
+      const conf = act.reduce((acc, snd) => ({ ...acc, [snd.id]: snd.volume }), {} as Record<number, number>);
+      
+      const newPrefs = { ...s.user.preferences, customPresets: { ...(s.user.preferences?.customPresets || {}), [slot]: conf } } as UserPreferences;
+      
+      const u = { ...s.user, preferences: newPrefs };
+      set({ user: u });
+      
+      const users = safeParse<User[]>(SK_USERS, []);
+      const idx = users.findIndex(usr => usr.username === u.username);
+      if (idx !== -1) {
+        users[idx] = u;
+        localStorage.setItem(SK_USERS, JSON.stringify(users));
+      }
+      localStorage.setItem(SK_CURR, JSON.stringify(u));
+    },
 
-  toggleMute: () => {
-    const { globalVolume, isMuted, prevVolume, sounds } = get();
-    const targetVol = isMuted ? (prevVolume > 0 ? prevVolume : 80) : 0;
-    set({ prevVolume: isMuted ? prevVolume : globalVolume, globalVolume: targetVol, isMuted: !isMuted });
-    sounds.forEach(s => { howls[s.id]?.volume(mixVol(s.volume, targetVol)); });
-    get()._savePreferences();
-  },
+    clearCustomPreset: slot => {
+      const s = get();
+      if (!s.user || !s.user.preferences?.customPresets) return;
+      const cps = { ...s.user.preferences.customPresets };
+      delete cps[slot];
+      
+      const newPrefs = { ...s.user.preferences, customPresets: cps };
+      const u = { ...s.user, preferences: newPrefs };
+      set({ user: u });
+      
+      const users = safeParse<User[]>(SK_USERS, []);
+      const idx = users.findIndex(usr => usr.username === u.username);
+      if (idx !== -1) {
+        users[idx] = u;
+        localStorage.setItem(SK_USERS, JSON.stringify(users));
+      }
+      localStorage.setItem(SK_CURR, JSON.stringify(u));
+    },
+    
+    applyRandomMix: () => {
+      const mix: Record<number, number> = {};
+      const count = Math.floor(Math.random() * 3) + 2;
+      const available = [...SOUNDS_DATA.map(d => d.id)];
+      for (let i = 0; i < count; i++) {
+        const idx = Math.floor(Math.random() * available.length);
+        mix[available[idx]] = Math.floor(Math.random() * 60) + 20;
+        available.splice(idx, 1);
+      }
+      update({
+        isGlobalPlaying: true,
+        sounds: get().sounds.map(s => mix[s.id] !== undefined ? { ...s, isPlaying: true, volume: mix[s.id] } : { ...s, isPlaying: false })
+      });
+    },
 
-  updateGlobalVolume: (vol) => {
-    set({ globalVolume: vol, isMuted: vol === 0 });
-    get().sounds.forEach(s => { howls[s.id]?.volume(mixVol(s.volume, vol)); });
-    get()._savePreferences();
-  },
-
-  setTimerDuration: (m) => {
-    set({ timerDuration: m, isTimerActive: m > 0, initialTimerDuration: m });
-    get()._savePreferences();
-  },
-
-  toggleGlobalPlay: () => {
-    const state = get();
-    if (state.isGlobalPlaying) {
-      const curr = state.sounds.filter(s => s.isPlaying).map(s => s.id);
+    resetMix: () => update({
+      isGlobalPlaying: false,
+      sounds: get().sounds.map(s => ({ ...s, isPlaying: false, volume: 50 }))
+    }),
+    
+    applyUrlMix: qs => {
+      const p = new URLSearchParams(qs);
+      const m = p.get('m');
+      if (!m) return;
+      try {
+        const d = JSON.parse(atob(m));
+        if (typeof d !== 'object') return;
+        update({
+          isGlobalPlaying: true,
+          sounds: get().sounds.map(s => d[s.id] !== undefined ? { ...s, isPlaying: true, volume: Math.max(0, Math.min(100, Number(d[s.id]))) } : { ...s, isPlaying: false })
+        });
+      } catch (e) {}
+    },
+    
+    login: (u, p) => {
+      if (!p) return false;
+      const found = safeParse<User[]>(SK_USERS, []).find(usr => usr.username === u && usr.password === hashPwd(p));
+      if (!found) return false;
+      
+      // 登录时清洗旧偏好数据
+      let cleanPrefs = {};
+      if (found.preferences) {
+        cleanPrefs = {
+          globalVolume: typeof found.preferences.globalVolume === 'number' ? found.preferences.globalVolume : 100,
+          timerDuration: typeof found.preferences.timerDuration === 'number' ? found.preferences.timerDuration : 0,
+          soundStates: toStates(reconstructSounds(found.preferences.soundStates)),
+          lastActiveIds: Array.isArray(found.preferences.lastActiveIds) ? found.preferences.lastActiveIds : [],
+          customPresets: found.preferences.customPresets
+        };
+      }
+      
+      const safeUser = { ...found, preferences: cleanPrefs as UserPreferences };
+      set({ user: safeUser, isLoggedIn: true, isLoginModalOpen: false, ...(safeUser.preferences ? fromPrefs(safeUser.preferences) : {}) });
+      if (safeUser.preferences) get().rehydrateAudio();
+      localStorage.setItem(SK_CURR, JSON.stringify(safeUser));
+      return true;
+    },
+    
+    register: (u, p) => {
+      if (!p) return false;
+      const users = safeParse<User[]>(SK_USERS, []);
+      if (users.some(usr => usr.username === u)) return false;
+      const nu: User = { id: Date.now().toString(), username: u, password: hashPwd(p) };
+      users.push(nu);
+      localStorage.setItem(SK_USERS, JSON.stringify(users));
+      localStorage.setItem(SK_CURR, JSON.stringify(nu));
+      set({ user: nu, isLoggedIn: true, isLoginModalOpen: false, lastActiveIds: [], timerDuration: 0, sounds: freshSounds() });
+      return true;
+    },
+    
+    logout: () => {
       stopAll();
-      set({ isGlobalPlaying: false, isTimerActive: false, sounds: mapSounds(state.sounds, () => ({ isPlaying: false })), lastActiveIds: curr.length ? curr : state.lastActiveIds });
-    } else {
-      const ids = state.lastActiveIds?.length ? state.lastActiveIds : [1];
-      set({ isGlobalPlaying: true, sounds: mapSounds(state.sounds, s => ({ isPlaying: ids.includes(s.id) })) });
-      get().rehydrateAudio();
-    }
-    get()._savePreferences();
-  },
+      localStorage.removeItem(SK_CURR);
+      set({ user: null, isLoggedIn: false, sounds: freshSounds(), ...RESET_STATE });
+    },
+    
+    deleteAccount: () => {
+      const { user, logout } = get();
+      if (!user) return;
+      localStorage.setItem(SK_USERS, JSON.stringify(safeParse<User[]>(SK_USERS, []).filter(u => u.username !== user.username)));
+      logout();
+    },
+    
+    toggleLoginModal: o => set({ isLoginModalOpen: o }),
+    toggleShareModal: o => set({ isShareModalOpen: o }),
+    rehydrateAudio: () => { get().sounds.forEach(s => initAudio(s.id, s.audioUrl)); syncAudio(get()); },
+  };
+});
 
-  applyPreset: (type) => {
-    const conf = PRESETS[type];
-    if (conf) applyVolConfig(get, set, conf.vols, { active: true, duration: conf.time });
-  },
-
-  applyRandomMix: () => {
-    const ids = [1, 2, 3, 4, 5, 6, 7, 8];
-    for (let i = ids.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [ids[i], ids[j]] = [ids[j], ids[i]];
-    }
-    const selectedIds = ids.slice(0, 3);
-    const vols: Record<number, number> = {};
-    selectedIds.forEach(id => {
-      vols[id] = Math.floor(Math.random() * 51) + 30;
-    });
-    applyVolConfig(get, set, vols);
-  },
-
-  saveCustomPreset: (slot) => {
-    const { user, sounds } = get();
-    if (!user) return;
-    const active = sounds.filter(s => s.isPlaying);
-    if (!active.length) return;
-    const vols = Object.fromEntries(active.map(s => [s.id, s.volume]));
-    const prefs = user.preferences || { globalVolume: 80, timerDuration: 15, soundStates: [], lastActiveIds: [] };
-    set({ user: { ...user, preferences: { ...prefs, customPresets: { ...(prefs.customPresets || {}), [slot]: vols } } } });
-    get()._savePreferences();
-  },
-
-  applyCustomPreset: (slot) => {
-    const vols = get().user?.preferences?.customPresets?.[slot];
-    if (vols) applyVolConfig(get, set, vols);
-  },
-
-  clearCustomPreset: (slot) => {
-    const { user } = get();
-    if (!user?.preferences?.customPresets) return;
-    const customPresets = { ...user.preferences.customPresets };
-    delete customPresets[slot];
-    set({ user: { ...user, preferences: { ...user.preferences, customPresets } } });
-    get()._savePreferences();
-  },
-
-  applyUrlMix: (qs) => {
-    if (!qs) return;
-    const vols = Object.fromEntries(
-      Array.from(new URLSearchParams(qs).entries())
-        .map(([k, v]) => [NAME_TO_ID[k.toLowerCase()], parseInt(v, 10)])
-        .filter(([id, v]) => id && !isNaN(v as number) && (v as number) >= 0 && (v as number) <= 100)
-    );
-    if (Object.keys(vols).length) applyVolConfig(get, set, vols);
-  },
-
-  resetMix: () => {
-    stopAll();
-    set({ sounds: mapSounds(get().sounds, () => ({ isPlaying: false, volume: 50 })), ...RESET_STATE });
-    get()._savePreferences();
-  },
-
-  login: (u, p) => {
-    if (!p) return false;
-    const found = safeParse<User[]>(SK_USERS, []).find(usr => usr.username === u && usr.password === hashPwd(p));
-    if (!found) return false;
-    set({ user: found, isLoggedIn: true, isLoginModalOpen: false, ...(found.preferences ? fromPrefs(found.preferences) : {}) });
-    if (found.preferences) get().rehydrateAudio();
-    localStorage.setItem(SK_CURR, JSON.stringify(found));
-    return true;
-  },
-
-  register: (u, p) => {
-    if (!p) return false;
-    const users = safeParse<User[]>(SK_USERS, []);
-    if (users.some(usr => usr.username === u)) return false;
-    const nu: User = { id: Date.now().toString(), username: u, password: hashPwd(p) };
-    users.push(nu);
-    localStorage.setItem(SK_USERS, JSON.stringify(users));
-    localStorage.setItem(SK_CURR, JSON.stringify(nu));
-    set({ user: nu, isLoggedIn: true, isLoginModalOpen: false, lastActiveIds: [], timerDuration: 15 });
-    return true;
-  },
-
-  logout: () => {
-    stopAll();
-    localStorage.removeItem(SK_CURR);
-    set({ user: null, isLoggedIn: false, sounds: freshSounds(), ...RESET_STATE });
-  },
-
-  deleteAccount: () => {
-    const { user, logout } = get();
-    if (!user) return;
-    localStorage.setItem(SK_USERS, JSON.stringify(safeParse<User[]>(SK_USERS, []).filter(u => u.username !== user.username)));
-    logout();
-  },
-
-  toggleLoginModal: (open?) => set(s => ({ isLoginModalOpen: open ?? !s.isLoginModalOpen })),
-  toggleShareModal: (open?) => set(s => ({ isShareModalOpen: open ?? !s.isShareModalOpen })),
-  setLang: (lang) => { localStorage.setItem(SK_LANG, JSON.stringify(lang)); set({ lang }); },
-}));
+// Initialize audio context lazily on first user interaction
+const initCtx = () => {
+  Howler.ctx || (Howler.ctx = new (window.AudioContext || (window as any).webkitAudioContext)());
+  useSoundStore.getState().rehydrateAudio();
+  ['click', 'touchstart', 'keydown'].forEach(e => document.removeEventListener(e, initCtx));
+};
+if (typeof document !== 'undefined') {
+  ['click', 'touchstart', 'keydown'].forEach(e => document.addEventListener(e, initCtx, { once: true }));
+}

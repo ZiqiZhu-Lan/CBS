@@ -9,6 +9,9 @@ import { GiDove, GiCricket, GiBigWave, GiTreeBranch } from 'react-icons/gi';
 import { motion, AnimatePresence, useScroll, useTransform, Variants, useSpring, useMotionValue } from 'framer-motion';
 import { Howler } from 'howler';
 
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile } from '@ffmpeg/util';
+
 import rainBg from './assets/images/rain-on-grasst.png';
 import wavesBg from './assets/images/waves.png';
 import fireBg from './assets/images/bonfire.png';
@@ -132,13 +135,17 @@ const ShareModal = () => {
   const d = dict[lang];
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [isTranscoding, setIsTranscoding] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [fileExt, setFileExt] = useState('mp4'); 
   const isRecordingRef = useRef(false);
+  const ffmpegRef = useRef(new FFmpeg());
 
   useEffect(() => {
     if (!isOpen) {
       setVideoUrl(null);
       setIsRecording(false);
+      setIsTranscoding(false);
       setProgress(0);
       isRecordingRef.current = false;
     }
@@ -146,128 +153,133 @@ const ShareModal = () => {
 
   const startRecording = async () => {
     setIsRecording(true);
+    setIsTranscoding(false);
     setProgress(0);
     isRecordingRef.current = true;
 
-    const active = sounds.filter(s => s.isPlaying).sort((a, b) => b.volume - a.volume);
+    const safeSounds = (sounds || []).filter(s => s && typeof s === 'object' && 'volume' in s);
+    const active = safeSounds.filter(s => s.isPlaying).sort((a, b) => Number(b.volume || 0) - Number(a.volume || 0));
     const mainImg = active.length > 0 ? await loadImg(bgMap[active[0].id]) : null;
 
     const canvas = document.createElement('canvas');
-    canvas.width = 1080;
-    canvas.height = 1920; 
+    canvas.width = 1080; canvas.height = 1920; 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const audioCtx = Howler.ctx;
+    let audioCtx = Howler.ctx;
     if (!audioCtx) {
-      setIsRecording(false);
-      return;
+        setIsRecording(false); 
+        return; 
+    }
+    if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
     }
 
     const dest = audioCtx.createMediaStreamDestination();
     const analyser = audioCtx.createAnalyser();
     analyser.fftSize = 256; 
-    Howler.masterGain.connect(analyser);
-    analyser.connect(dest);
 
-    const canvasStream = canvas.captureStream(30);
+    Howler.masterGain.connect(analyser);
+    analyser.connect(audioCtx.destination); 
+    Howler.masterGain.connect(dest);        
+
+    const canvasStream = (canvas as any).captureStream(30);
+    
     const audioTrack = dest.stream.getAudioTracks()[0];
-    if (audioTrack) canvasStream.addTrack(audioTrack);
+    if (audioTrack) {
+        canvasStream.addTrack(audioTrack);
+    }
 
     const mimeType = [
-      'video/mp4',
       'video/webm;codecs=vp9',
       'video/webm'
-    ].find(t => MediaRecorder.isTypeSupported(t)) || '';
+    ].find(t => MediaRecorder.isTypeSupported(t)) || 'video/webm';
 
     const recorder = new MediaRecorder(canvasStream, { mimeType });
     const chunks: Blob[] = [];
     recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-    recorder.onstop = () => {
-      const blob = new Blob(chunks, { type: mimeType || 'video/webm' });
-      setVideoUrl(URL.createObjectURL(blob));
+    
+    recorder.onstop = async () => {
       setIsRecording(false);
-      isRecordingRef.current = false;
+      setIsTranscoding(true);
+      const webmBlob = new Blob(chunks, { type: mimeType });
+
+      try {
+        const ffmpeg = ffmpegRef.current;
+        if (!ffmpeg.loaded) {
+          const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+          await ffmpeg.load({
+            coreURL: `${baseURL}/ffmpeg-core.js`,
+            wasmURL: `${baseURL}/ffmpeg-core.wasm`,
+          });
+        }
+
+        ffmpeg.on('progress', ({ progress: p }) => setProgress(p));
+
+        await ffmpeg.writeFile('input.webm', await fetchFile(webmBlob));
+        
+        await ffmpeg.exec(['-i', 'input.webm', '-c:v', 'copy', '-c:a', 'aac', 'output.mp4']);
+
+        const fileData = await ffmpeg.readFile('output.mp4');
+        const mp4Blob = new Blob([fileData as any], { type: 'video/mp4' });
+
+        setVideoUrl(URL.createObjectURL(mp4Blob));
+        setFileExt('mp4');
+      } catch (err) {
+        console.error("Transcoding failed, falling back to webm:", err);
+        setVideoUrl(URL.createObjectURL(webmBlob));
+        setFileExt('webm');
+      } finally {
+        setIsTranscoding(false);
+        isRecordingRef.current = false;
+        
+        try {
+            Howler.masterGain.disconnect(dest);
+            Howler.masterGain.disconnect(analyser);
+        } catch(e) {}
+      }
     };
 
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
     let frameId: number;
-
     const draw = () => {
       if (!isRecordingRef.current) return;
       frameId = requestAnimationFrame(draw);
-
       analyser.getByteFrequencyData(dataArray);
-
-      ctx.fillStyle = '#050505';
-      ctx.fillRect(0, 0, 1080, 1920);
-
+      ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, 1080, 1920);
       if (mainImg) {
-        const imgRatio = mainImg.width / mainImg.height;
-        const boxRatio = 1080 / 1920;
+        const imgRatio = mainImg.width / mainImg.height; const boxRatio = 1080 / 1920;
         let dw = 1080, dh = 1920, dx = 0, dy = 0;
-        if (imgRatio > boxRatio) {
-          dw = 1920 * imgRatio; dx = -(dw - 1080) / 2;
-        } else {
-          dh = 1080 / imgRatio; dy = -(dh - 1920) / 2;
-        }
+        if (imgRatio > boxRatio) { dw = 1920 * imgRatio; dx = -(dw - 1080) / 2; }
+        else { dh = 1080 / imgRatio; dy = -(dh - 1920) / 2; }
         ctx.drawImage(mainImg, dx, dy, dw, dh);
-        ctx.fillStyle = 'rgba(5, 5, 5, 0.75)';
-        ctx.fillRect(0, 0, 1080, 1920);
+        ctx.fillStyle = 'rgba(5, 5, 5, 0.75)'; ctx.fillRect(0, 0, 1080, 1920);
       }
-
       const cx = 540, cy = 800, r = 250;
       ctx.beginPath();
       for (let i = 0; i < bufferLength; i++) {
-        const v = dataArray[i] / 255.0;
-        const h = v * 200;
-        const angle = (i / bufferLength) * Math.PI * 2;
-        const x1 = cx + Math.cos(angle) * r;
-        const y1 = cy + Math.sin(angle) * r;
-        const x2 = cx + Math.cos(angle) * (r + h);
-        const y2 = cy + Math.sin(angle) * (r + h);
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
+        const v = dataArray[i] / 255.0; const h = v * 200; const angle = (i / bufferLength) * Math.PI * 2;
+        const x1 = cx + Math.cos(angle) * r; const y1 = cy + Math.sin(angle) * r;
+        const x2 = cx + Math.cos(angle) * (r + h); const y2 = cy + Math.sin(angle) * (r + h);
+        ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
       }
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-      ctx.lineWidth = 4;
-      ctx.lineCap = 'round';
-      ctx.stroke();
-
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-      ctx.font = '500 28px "Helvetica Neue", Helvetica, Arial, sans-serif';
-      ctx.letterSpacing = '10px';
-      ctx.textAlign = 'center';
-      ctx.fillText('CBS-SILENCE', cx, cy + 10);
-
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)'; ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.stroke();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.font = '500 28px "Helvetica Neue", Helvetica, Arial, sans-serif'; ctx.letterSpacing = '10px'; ctx.textAlign = 'center'; ctx.fillText('CBS-SILENCE', cx, cy + 10);
+      
       ctx.textAlign = 'left';
       const bottomY = 1400;
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-      ctx.font = '400 24px "Helvetica Neue", Helvetica, Arial, sans-serif';
-      ctx.letterSpacing = '6px';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'; ctx.font = '400 24px "Helvetica Neue", Helvetica, Arial, sans-serif'; ctx.letterSpacing = '6px';
       ctx.fillText(lang === 'ca' ? 'LA TEVA ATMOSFERA' : 'TU ATMÓSFERA', 120, bottomY);
 
-      const leftColX = 120;
-      const rightColX = 540;
-      const listStartY = bottomY + 80;
-
+      const leftColX = 120; const rightColX = 540; const listStartY = bottomY + 80;
       active.forEach((s, idx) => {
         const name = (lang === 'ca' ? s.name_ca : s.name_es).split(' ')[0];
-        const volStr = s.volume.toString();
-        const isRight = idx % 2 !== 0;
-        const baseX = isRight ? rightColX : leftColX;
+        const volStr = (s.volume || 0).toString();
+        const isRight = idx % 2 !== 0; const baseX = isRight ? rightColX : leftColX;
         const y = listStartY + Math.floor(idx / 2) * 60;
-
-        ctx.font = '600 28px "Helvetica Neue", Helvetica, Arial, sans-serif';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-        ctx.letterSpacing = '4px';
-        ctx.fillText(name, baseX, y);
-
-        ctx.font = '400 28px monospace';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-        ctx.letterSpacing = '0px';
-        ctx.fillText(volStr, baseX + 260, y);
+        ctx.font = '600 28px "Helvetica Neue", Helvetica, Arial, sans-serif'; ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'; ctx.letterSpacing = '4px'; ctx.fillText(name, baseX, y);
+        ctx.font = '400 28px monospace'; ctx.fillStyle = 'rgba(255, 255, 255, 0.4)'; ctx.letterSpacing = '0px'; ctx.fillText(volStr, baseX + 260, y);
       });
     };
 
@@ -281,15 +293,8 @@ const ShareModal = () => {
       setProgress(elapsed / totalTime);
       if (elapsed >= totalTime) {
         clearInterval(intervalId);
-        isRecordingRef.current = false;
         recorder.stop();
         cancelAnimationFrame(frameId);
-        setTimeout(() => {
-          try {
-            Howler.masterGain.disconnect(analyser);
-            analyser.disconnect(dest);
-          } catch (e) {}
-        }, 100);
       }
     }, 100);
   };
@@ -298,7 +303,7 @@ const ShareModal = () => {
     if (!navigator.share || !videoUrl) return;
     try {
       const blob = await (await fetch(videoUrl)).blob();
-      const file = new File([blob], 'silence-mix.mp4', { type: blob.type });
+      const file = new File([blob], `silence-mix.${fileExt}`, { type: blob.type });
       await navigator.share({
         title: 'CBS-SILENCE',
         text: 'Escucha mi atmósfera.',
@@ -310,17 +315,17 @@ const ShareModal = () => {
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div className="modal-overlay" onClick={() => !isRecording && toggleShareModal(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+        <motion.div className="modal-overlay" onClick={() => !isRecording && !isTranscoding && toggleShareModal(false)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <motion.div className="modal-content share-modal-content" onClick={e => e.stopPropagation()} {...modalAnim(0.95, 20, 0.4)}>
             <h2 id="share-title">{d.shareApp}</h2>
             <div className="video-container">
               {videoUrl ? (
                 <video src={videoUrl} controls autoPlay loop className="share-video-preview" />
-              ) : isRecording ? (
+              ) : isRecording || isTranscoding ? (
                 <div className="recording-status">
                   <div className="pulsing-record-dot" />
-                  <span>RECORDING</span>
-                  <div className="record-progress-bar" style={{ width: `${progress * 100}%` }} />
+                  <span>{isTranscoding ? 'TRANSCODING MP4...' : 'RECORDING...'}</span>
+                  <div className="record-progress-bar" style={{ width: `${Math.min(progress * 100, 100)}%` }} />
                 </div>
               ) : (
                 <button className="btn-auth-submit btn-start-record" onClick={startRecording}>
@@ -330,7 +335,7 @@ const ShareModal = () => {
             </div>
             {videoUrl && (
               <div className="share-actions">
-                <a className="btn-auth-submit btn-cancel" href={videoUrl} download="silence-mix.mp4">
+                <a className="btn-auth-submit btn-cancel" href={videoUrl} download={`silence-mix.${fileExt}`}>
                   <FiDownload size={16} /> {d.download}
                 </a>
                 {'share' in navigator && (
@@ -347,13 +352,15 @@ const ShareModal = () => {
   );
 };
 
-const CustomCursor = () => {
+const CustomCursor = ({ idle }: { idle: boolean }) => {
   const x = useMotionValue(-100), y = useMotionValue(-100);
   const trailX = useSpring(x, { stiffness: 600, damping: 25, mass: 0.2 });
   const trailY = useSpring(y, { stiffness: 600, damping: 25, mass: 0.2 });
   const [hover, setHover] = useState(false);
 
   useEffect(() => {
+    if (idle) return;
+    
     let last = false;
     const onMove = (e: MouseEvent) => {
       x.set(e.clientX - 10); y.set(e.clientY - 10);
@@ -362,7 +369,9 @@ const CustomCursor = () => {
     };
     window.addEventListener('mousemove', onMove, { passive: true });
     return () => window.removeEventListener('mousemove', onMove);
-  }, [x, y]);
+  }, [x, y, idle]);
+
+  if (idle) return null;
 
   return (
     <>
@@ -384,9 +393,10 @@ const CustomCursor = () => {
 const StatusMonitor = () => {
   const { sounds, isGlobalPlaying, lang } = useSoundStore();
   const d = dict[lang];
-  const active = sounds.filter(s => s.isPlaying);
+  const safeSounds = (sounds || []).filter(s => s && typeof s === 'object' && 'volume' in s);
+  const active = safeSounds.filter(s => s.isPlaying);
   const cnt = active.length;
-  const avg = cnt ? Math.round(active.reduce((a, s) => a + s.volume, 0) / cnt) : 0;
+  const avg = cnt ? Math.round(active.reduce((a, s) => a + Number(s.volume || 0), 0) / cnt) : 0;
   const cls = (on: boolean) => `hud-val ${on ? 'hud-val--on' : 'hud-val--off'}`;
 
   return (
@@ -401,7 +411,7 @@ const StatusMonitor = () => {
       <div className="hud-cell">
         <span className="hud-label">{d.pistas}</span>
         <span className={cls(cnt > 0)}>
-          <span className="hud-big">{cnt.toString().padStart(2, '0')}</span>/<span className="hud-sub">{sounds.length.toString().padStart(2, '0')}</span>
+          <span className="hud-big">{cnt.toString().padStart(2, '0')}</span>/<span className="hud-sub">{safeSounds.length.toString().padStart(2, '0')}</span>
         </span>
       </div>
       <div className="hud-sep" aria-hidden="true" />
@@ -579,7 +589,8 @@ export default function App() {
     setLogoRipple(true);
     setTimeout(() => setLogoRipple(false), 1200);
   };
-  const { idle, quote } = useIdle(10000);
+  
+  const { idle, quote } = useIdle(30000);
 
   const [shareToastMsg, showShareToast] = useToast(3000);
   const [globalToastMsg, showGlobalToast] = useToast(1500);
@@ -646,15 +657,18 @@ export default function App() {
 
   const handleTimer = (m: number) => { setTimerPreset(m); store.setTimerDuration(m); };
 
+  const validAppSounds = (store.sounds || []).filter(s => s && typeof s === 'object' && 'volume' in s);
+
   const handleShareClick = () => {
-    const active = store.sounds.filter(s => s.isPlaying);
+    const active = validAppSounds.filter(s => s.isPlaying);
     if (!active.length) return showShareToast(d.noActive);
     store.toggleShareModal(true);
   };
 
   return (
     <>
-      <CustomCursor />
+      <CustomCursor idle={idle} />
+      
       <div className={`zen-overlay ${idle ? 'active' : ''}`} aria-hidden="true">
         <p className="zen-text">{quote}</p>
       </div>
@@ -768,7 +782,7 @@ export default function App() {
                       ) : (
                         <button
                           onClick={() => {
-                            if (!store.sounds.some(s => s.isPlaying)) return showShareToast(d.noActiveToSave);
+                            if (!validAppSounds.some(s => s.isPlaying)) return showShareToast(d.noActiveToSave);
                             store.saveCustomPreset(slot);
                             showShareToast(`${d.mix} 0${slot} ${d.saved}`);
                           }}
@@ -790,8 +804,8 @@ export default function App() {
           </motion.section>
 
           <div className="sounds-gallery" aria-label="Sound Mixers">
-            {store.sounds.map((s, i) => (
-              <SoundCard key={s.id} s={s} i={i} isDim={hovered !== null && hovered !== s.id} hovered={hovered} setHovered={setHovered} toggleSound={store.toggleSound} updateSoundVolume={store.updateSoundVolume} lang={store.lang} />
+            {validAppSounds.map((s, i) => (
+              <SoundCard key={s.id || i} s={s} i={i} isDim={hovered !== null && hovered !== s.id} hovered={hovered} setHovered={setHovered} toggleSound={store.toggleSound} updateSoundVolume={store.updateSoundVolume} lang={store.lang} />
             ))}
           </div>
         </main>

@@ -2,9 +2,11 @@
   "name": "custom-background-sound",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://cbs-silence.github.io/CBS",
+  "homepage": "https://github.com/CBS-SILENCE/CBS.git",
   "dependencies": {
-    "crypto-js": "^4.2.0https",
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
+    "crypto-js": "^4.2.0",
     "framer-motion": "^11.18.2",
     "howler": "^2.2.4",
     "react": "^19.2.4",
